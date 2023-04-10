@@ -1,0 +1,22 @@
+{
+  "name": "svenbw/kohana-email",
+  "description": "Email module for Koseven",
+  "version": "1.0.0",
+  "license": "MIT",
+  "keywords": [
+    "kohana",
+    "koseven",
+    "email"
+  ],
+  "authors": [
+    {
+      "name": "Sven Rymenants",
+      "email": "sven@byteworks.be",
+      "role": "developer"
+    }
+  ],
+  "require": {
+    "swiftmailer/swiftmailer": "^5.4",
+    "phpmailer/phpmailer": "^5.2"
+  }
+}
