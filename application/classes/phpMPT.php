@@ -13,6 +13,8 @@ class phpMPT
     public $result;            /* результат выполнения команды */
     public $answer;            /* ответ на команду (если он должен быть) */
     public $command;            /* команда для выполнения */
+    public $commandParam;            /* параметры команды */
+    public $coordinate;            /* координаты вывода строки на табло */
     public $binCommand;            /* команда для выполнения */
     public $codeCommand;            /* код команды контроллера */
    
@@ -31,7 +33,10 @@ class phpMPT
     public function connect()
     {
      //открываю сокет UDP 
+	
+	 
 	  $this->socket= @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+	  socket_set_option($this->socket,SOL_SOCKET, SO_RCVTIMEO, array("sec"=>2, "usec"=>0));
 		if (false == $this->socket) { 
 			die("Couldn't create socket, error code is: " . iconv('windows-1251','UTF-8',socket_last_error()) .
 			",error message is: " . iconv('windows-1251','UTF-8', socket_strerror(socket_last_error())));
@@ -40,6 +45,7 @@ class phpMPT
 	
 		// создаем соединение 
 		$this->connection = @socket_connect($this->socket, $this->address, $this->port);
+		
 		if ($this->connection === false)      die("Cannot connect to server".$server.":". $port);
    
 
@@ -70,8 +76,16 @@ class phpMPT
         //echo Debug::vars('69',unpack('C*',$this->binCommand),  unpack('C*', $command));
 		if($this->connection === true)
 		{
-			socket_write($this->socket, $command, strlen($command));
-			$reply = socket_read($this->socket,4096);
+			try
+			{
+				socket_write($this->socket, $command, strlen($command));
+				$reply = socket_read($this->socket,4096);
+				} catch  (Exception $e) {
+					
+					$this->result='Err';
+					$this->edesc=$e->getMessage();
+					return;	
+				}
 			
 		} else {
 				$reply ='No connection';
@@ -109,28 +123,31 @@ class phpMPT
 
 	/*
 			функция из текстовых команд формирует бинарный набор (включая в себя длину команды и BCC)
+		
+		$command - текст команды	
+		$this->commandParam - дополнительные параметры команды 
+		$this->coordinate - дополнительные параметры команды	
 	
 	*/
 	public function make_binary_command($command)
 	{
-		echo Debug::vars('115', $command);
-		$known_commands = array(
-        'GetVersion'=>array(0x56), 
-		'opendoor door=0'=>array(0x4F, 0x00),
-		'opendoor door=1'=>array(0x4F, 0x01),
-		);
-		$this->codeCommand=Arr::get(Arr::get($known_commands, $this->command), 0);
-		$commandLen = count(Arr::get($known_commands, $this->command))+2; // длина команды
-		$result=pack('c', $commandLen);// сформировал первый байт команды (длина)
-		foreach (Arr::get($known_commands, $this->command) as $key)
-		{
-			
-			$result=$result.pack('c', $key);// собираю команду как набор бинарных данных
-		}
 		
-		$_bcc=$this->bcc($result, 0, $commandLen); // получение bcc по всей команде
-			
-		return $result.$_bcc;;
+		$known_commands = array(
+        'GetVersion'=>"\x56", 
+		'opendoor'=>"\x4F",
+		'text'=>"\x46",
+		'clearTablo'=>"\x44",
+		'scrolText'=>"\x4A",
+		);
+		
+		echo Debug::vars('115 команда в контроллер', $command, $this->commandParam, $this->coordinate, Arr::get(unpack('c*', (Arr::get($known_commands, $command))), 1));
+		$this->codeCommand=Arr::get(unpack('c*', (Arr::get($known_commands, $command))), 1);//запоминаю команду для последующего сравнения
+		
+		$ttr=Arr::get($known_commands, $this->command).$this->coordinate.$this->commandParam;// сборка команды с параметрами, без длины и BCC
+		$lenCommad=pack('c', strlen($ttr)+2);// длина команды в формате binary
+		$_bcc=$this->bcc($lenCommad.$ttr, 0, strlen($ttr)+2); // получение bcc по всей команде
+	
+		return $lenCommad.$ttr.$_bcc;
 	}
 	
 	
@@ -147,13 +164,13 @@ class phpMPT
 	
 	public function checkAnswer($data)
 	{
-		echo Debug::vars('140', unpack("C*",$data)); 
+		echo Debug::vars('158 ответ на команду', unpack("C*",$data)); 
 		$_lenData=strlen($data);
 		$_lenDEC=Arr::get(unpack('c*', $data), 1);
 		$_commandRepeatDEC=Arr::get(unpack('c*', $data), 3);
-		$_resultDEC=Arr::get(unpack('c*', $data), 2);
+		$_resultDEC=Arr::get(unpack('c*', $data), 4);
 		$_bccDEC=Arr::get(unpack('c*', $data), $_lenData);
-		echo Debug::vars('155', $_commandRepeatDEC, $this->command);
+		 //echo Debug::vars('155 десятичный номер команды в ответе', $_commandRepeatDEC, $this->command);
 		
 		for($i=3; $i<$_lenData; $i++)
 		{
@@ -186,7 +203,7 @@ class phpMPT
 
 						
 						$this->result='Err';
-						$this->edesc='Команда выполнена с ошибкой '.$_resultDEC.' ('.Arr::get($err_messm, $_resultDEC).')';
+						$this->edesc='Команда выполнена с ошибкой '.$_resultDEC.' ('.Arr::get($err_mess, $_resultDEC).')';
 						
 						
 					} 
@@ -208,54 +225,64 @@ class phpMPT
 							}
 							$this->answer=$_res;
 						}
-
+		//echo Debug::vars('216', $this->result, $this->edesc,$this->answer ); 
 		return;
 		
 	}
 	
 	public function sendtext($mess, $param)//вывод сообщения на табло
 	{
-		
+		$this->command='opendoor door=0';
+		$this->execute();
 		return;
 	}
    
    public function openGate($mode)// открытие ворот с учетом режима работы
 	{
+		//echo Debug::vars('241', $mode ); exit;
 		if($mode ==0)
 		{
-			$this->command='opendoor door=0';
+			$this->command='opendoor';
+			$this->commandParam="\x00";
 			$this->execute();
 			
-			$this->command='opendoor door=1';
+			$this->command='opendoor';
+			$this->commandParam="\x01";
 			$this->execute();
 		}
 		
 		if($mode ==1)
 		{
-			$this->command='opendoor door=0';
+			$this->command='opendoor';
+			$this->commandParam="\x00";
 			$this->execute();
 			
-			$this->command='opendoor door=1';
+			$this->command='opendoor';
+			$this->commandParam="\x01";
 			$this->execute();
 		}
 		
 		
 		if($mode ==2)
 		{
-			$this->command='opendoor door=0';
+			$this->command='opendoor';
+			$this->commandParam="\x00";
 			$this->execute();
 			
-			$this->command='opendoor door=1';
+			$this->command='opendoor';
+			$this->commandParam="\x01";
 			$this->execute();
 		}
 		
 		
 		if($mode ==3)
 		{
-			$this->command='opendoor door=0';
+			$this->command='opendoor';
+			$this->commandParam="\x00";
 			$this->execute();
 			
-			$this->command='opendoor door=1';
+			$this->command='opendoor';
+			$this->commandParam="\x01";
 			$this->execute();
 		}
 		

@@ -1,1 +1,0 @@
-C:\xampp\htdocs\city\application\classes\Model\Device.php
