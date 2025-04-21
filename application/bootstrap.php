@@ -106,7 +106,7 @@ if (isset($_SERVER['KOHANA_ENV']))
  * - boolean  expose      set the X-Powered-By header                        FALSE
  */
 Kohana::init(array(
-	'base_url'   => '/cvs/',
+	'base_url'   => '/api/',
 ));
 
 /**
@@ -133,6 +133,7 @@ Kohana::modules(array(
 	// 'unittest'   => MODPATH.'unittest',   // Unit testing
 	 'userguide'  => MODPATH.'userguide',  // User guide and API documentation
 	 'email' => MODPATH.'email',
+	 'rest' => MODPATH.'rest',
 	));
 
 /**
@@ -149,9 +150,18 @@ Kohana::modules(array(
  * defaults for the URI.
  */
 
-    
-Route::set('default', '(<controller>(/<action>(/<id>)))')
+/*     Route::set('default', '(<controller>(/<action>(/<id>)))')
 	->defaults(array(
-		'controller' => 'dashboard',
+		'controller' => 'Restexample1',
 		'action'     => 'index',
-	));
+	));   */
+
+ 
+Route::set('default', '<version>(/<directory>)/<controller>(.<format>)',
+		array(
+			'version' => 'v1', 	
+			'format'  => '(json|xml|csv|html)',
+		))
+		->defaults(array(
+			'format' => 'json',
+		));	

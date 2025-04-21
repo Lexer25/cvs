@@ -2,24 +2,17 @@
 
 return array
 (
-	//'fb' => Arr::get(Arr::get(Arr::get(Kohana::$config->load('skud'),'skud_list'), Session::instance()->get('skud_number')), 'fb_connection'),
-	// в Калибре выбор базы данных фиксирован.
-	'fb2' => array(
+	
+	'fb' => array(
 		'type'			=> 'pdo',
 		'connection'	=> array(
-			'dsn'		=> 'firebird:dbname=26.98.93.81:C:\Program Files (x86)\CardSoft\DuoSE\Access\ShieldPro_rest.gdb',
+			'dsn'		=> 'firebird:dbname=localhost:C:\\Temp3\\222.GDB',
 			'username'	=> 'SYSDBA',
 			'password'	=> 'temp',
+			//'password'	=> 'masterkey',
 			'charset'   => 'windows-1251',
 			)
 		),
-		'fb' => array(
-				'type'			=> 'pdo',
-				'connection'	=> array(
-					'dsn'		=> 'odbc:SDUO',
-					'charset'   => 'windows-1251',
-					)
-				),
 	
 );
 
