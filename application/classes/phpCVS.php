@@ -27,18 +27,21 @@ class phpCVS
 	
 	
 	//конструктор "работает" но номеру камеры, т.к. это единственный уникальный идентификатор источника данных.
-    public function __construct($cam)
+	//конструктор "работает" но номеру ворот.
+    public function __construct($id)
     {
        $sql='select hlp.tablo_ip, 
 					hlp.tablo_port,
 					hlp.box_ip,
 					hlp.box_port,
-					hlp.id_gate,
+					hlp.id as id_gate,
 					hlp.id_dev,
 					hlp.mode,
 					hlp.id_parking,
 					hlp.is_enter,
-					hlp.is_enter from hl_param hlp where hlp.id_cam='.$cam;
+					hlp.is_enter,
+					hlp.id_cam					
+					from hl_param hlp where hlp.id='.$id;
 					//echo Debug::vars('40', $sql);exit;
 					
 	   $query = DB::query(Database::SELECT, $sql)
@@ -55,7 +58,7 @@ class phpCVS
 					$this->mode=Arr::get($query, 'MODE');
 					$this->id_parking=Arr::get($query, 'ID_PARKING');
 					$this->isEnter=Arr::get($query, 'IS_ENTER');
-					$this->cam=$cam;
+					$this->cam=Arr::get($query, 'ID_CAM');
 					
 			$this->getMessForIdle();
 			return;
@@ -74,13 +77,54 @@ class phpCVS
 		return;
     }
 
-/* 30.04.2025
-Прцоесс валидации ГРЗ в указанной точке проезда
-
+/** 30.04.2025
+*Процесс валидации ГРЗ в указанной точке проезда
+*@param id_dev - точка проезда
+*@param GRZ - номерной знак
+*@return void
 */
+
  public function check()
     {
        
+		$sql='select rc as event_type, id_pep from REGISTERPASS_HL_2('.$this->id_dev.', \''.$this->grz.'\', NULL)';
+		echo Debug::vars('92', $sql);exit;
+		$query = DB::query(Database::SELECT, $sql)
+			->execute(Database::instance('fb'))
+			->as_array();
+		
+		$query=Arr::get($query, 0);
+		$this->getMessForEvent(Arr::get($query, 'EVENT_TYPE'));
+		//$this->getMessForIdle();
+		$this->code_validation = Arr::get($query, 'EVENT_TYPE');
+		return;
+    }
+	
+	
+	
+/** 3.05.2025
+*Процесс валидации ГРЗ и UHF в указанной точке проезда средствами php (не процедура в БД СКУД).
+*@param id_parking - id парковочной площадки
+*@param is_enter - true - въезд, false - выезд
+*@param GRZ - номерной знак
+*@return void
+*/
+
+ public function checkPHPin()
+    {
+		
+		//валидация card. если неуспешно, то сразу отказ в проезде (RC=46)
+		//если выезд, то праверить только разрешение на выезд и:
+			//разрешить выезд
+			//удалить card из таблицы inside
+		//если въезд, то проверить наличие свободных мест:
+			//подсчет количества машиномест в гараже для этого card
+			//подсчет уже занятых мест в этом гараже.
+			//сравнение.
+			//если места есть, то:
+				//разрешить въезд
+				//отметить card в таблице inside
+		
 		$sql='select rc as event_type, id_pep from REGISTERPASS_HL_2('.$this->id_dev.', \''.$this->grz.'\', NULL)';
 		//$sql='select event_type, id_pep from VALIDATEPASS_HL_PARKING('.$this->id_dev.', \''.$this->grz.'\', NULL)';
 		echo Debug::vars('83', $sql);exit;
@@ -94,6 +138,10 @@ class phpCVS
 		$this->code_validation = Arr::get($query, 'EVENT_TYPE');
 		return;
     }
+	
+	
+	
+	
 	
  public function getMessForEvent($id_event)
  {

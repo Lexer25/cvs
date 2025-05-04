@@ -20,7 +20,7 @@ return array(
 		'city' => array(
 
 			// Whether this modules userguide pages should be shown
-				'enabled' => true,
+				'enabled' => FALSE,
 
 			// The name that should show up on the userguide index page
 			'name' => 'Артонит Сити',

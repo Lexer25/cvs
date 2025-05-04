@@ -1,11 +1,17 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 
-//class Controller_Dashboard extends Controller_Template {
+//для отладки http://localhost/cvs/index.php/dashboard/exec для ГРЗ
+//для отладки http://localhost/cvs/index.php/dashboard/sendMPT для UHF
+//public $is_test=true
 class Controller_Dashboard extends Controller{
 
    public $template = 'template';
+   //K631TX199
+   //H497HB150
+   
+   //007E3AC2
    public $dataGRZ=array (
-			'camera' => 4,
+			'camera' => '1',
 			'channel' => 3,
 			'count' => 16,
 			'dateTime' => '20250429T141918Z',
@@ -16,7 +22,7 @@ class Controller_Dashboard extends Controller{
 			'image' =>  '/9j/4AAQSkZJRgABAQAAAQABAAD//gALQ1ZTIMDi8u4r/9sAQwAGBAUGBQQGBgUGBwcGCAoQCgoJCQoUDg8MEBcUGBgXFBYWGh0lHxobIxwWFiAsICMmJykqKRkfLTAtKDAlKCko/9sAQwEHBwcKCAoTCgoTKBoWGigoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgo/8QBogAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoLEAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+foBAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKCxEAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/8AAEQgC0AUAAwEhAAIRAQMRAf/aAAwDAQACEQMRAD8A8zUs7okcckkkjrGiRoXZmY4CgDkkkgYFd5p/hfwv4X0CHUvic1xc6nfqj2mg2d0wlEciqcumI2DqRIGLNsABHLYoAx4/FwaJGk8HeAVcqMr/AGGDg46ZEnP1ro/BcHhDx3eyaVrmm22heIZnC2MuhQPawzRKpkI27nj3jbJnzBypGM9gDK+HOh2H/CY6v4V8&nbsp;&hellip;',
 			'inList' => 0,
 			'passed' => 1,
-			'plate' => 'C023CA797',
+			'plate' => 'K631TX199',
 			'quality' =>  '555555555000',
 			'stayTimeMinutes' => 0,
 			'type' => 0,
@@ -24,10 +30,13 @@ class Controller_Dashboard extends Controller{
 			);
 			
 	public $dataUHF=array(
-			'key'=>'123BSD',
+			'key'=>'007E3AC2',
+			'ip'=>'192.168.0.100',
+			'channel'=>'0'
 			);
 			
-			public $is_test=false;//режим работы. 0 -рабочий режим, 1 - режим ТЕСТ
+			public $is_test=true;//режим работы. false -рабочий режим, true - режим ТЕСТ
+			
 	
 	public function before()
 	{
@@ -57,23 +66,46 @@ class Controller_Dashboard extends Controller{
 		if (!$this->request->method() === Request::POST)
 		{
 			
-			Log::instance()->add(Log::NOTICE, '56 Получил данные от MPT, но это не POST');
+			Log::instance()->add(Log::NOTICE, '60 Получил данные от MPT, но это не POST');
 		}
+			
+			if ($this->is_test) 
+		{
+			$input_data_0=$this->dataUHF;
+		} else {
 			$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
-			$input_data=$input_data_0;
-			Log::instance()->add(Log::NOTICE, '56 Получил данные от MPT '. Debug::vars($input_data));
-			Log::instance()->add(Log::NOTICE, '57 Получил данные от MPT '. Arr::get($input_data, 'ip'));
+		}
+			echo Debug::vars('78', $input_data_0);
+		
+		$input_data = $input_data_0;
+		$post=Validation::factory($input_data);
+		$post->rule('channel', 'not_empty')//номер канала должен быть 
+					->rule('channel', 'digit')
+					->rule('ip', 'not_empty')//IP контроллера должен быть
+					->rule('ip', 'ip')
+					->rule('ip', 'Model_cvss::checkIpIsPresent') 
+					->rule('key', 'not_empty')//значение ГРЗ
+					->rule('key', 'regex', array(':value', '/^[ABCDEF\d]{8}+$/')) // https://regex101.com/ строк буквы АНГЛ алфавита
+					
+					;
+		//$ip='192.168.0.101';
+		//echo Debug::vars('91', filter_var($ip, FILTER_VALIDATE_IP));exit;			
+			if(!$post->check())
+		{
 			
-			
-			//тут я получаю id_gate id гейта
-			$id_gate = Model::factory('mpt')->getIdGateFromMPT(Arr::get($input_data, 'ip'), Arr::get($input_data, 'channel'));
-			Log::instance()->add(Log::NOTICE, '65 получил id_gate по IP адресу контроллера'. $id_gate);
-			
-			
-			//и далее могу проводить валидацию, имея номер UHF и номер ворот.
-			
-			
-			
+			Log::instance()->add(Log::NOTICE, '95 Входные данные UHF не полные '. Debug::vars($post->errors()));//вывод номера в лог-файл
+			echo Debug::vars('96 валидация UHF прошла с ошибкой', $post->errors());//exit;
+			$this->response->status(200);
+			return;
+		}
+		//echo Debug::vars('101', Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip')));exit;
+		$cvs=new phpCVS(Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip')));
+		echo Debug::vars('103', $cvs);//exit;	
+		$cvs->grz=Arr::get($input_data, 'key');//передаю ГРЗ в модель
+		//$cvs->timeStamp=Arr::get($input_data, 'dateTime', -1);//передал в модель метку времени
+		//$cvs_event_id=Arr::get($input_data, 'id');//передал в модель номер события
+		$cvs->check(); 
+		echo Debug::vars('105', $cvs);exit;
 				
 		
 	$this->response->body($mess);
@@ -86,80 +118,93 @@ class Controller_Dashboard extends Controller{
 	//и их последующая обработка
 	public function action_exec()
 	{	
-		Model::factory('mpt')->setSemafor('123', '456');
+		//echo Debug::vars('89', Model::factory('mpt')->getSemafor('lastevent'));exit;
+		//Model::factory('mpt')->setSemafor('123', '456');
 		//Log::instance()->add(Log::NOTICE, '74 '.Debug::vars($this->request));
 		$t1=microtime(1);
-		//Log::instance()->add(Log::NOTICE, "000\r\n");//запись в лог о начале приема-начале обработки
-	
-	//опеределяю режим работы: тест или реальный?
-	if($this->request->param('id') == 'test')
-	{
-		Log::instance()->add(Log::NOTICE, '73 Работаю в режиме ТЕСТ');
-		$input_data=$this->data;
-		$this->is_test=true;
-		echo Debug::vars('78 работаю в режиме тест');
-		
-	} else {
+		Log::instance()->add(Log::NOTICE, "000\r\n");//запись в лог о начале приема-начале обработки
 
-		$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
-		//$input_data=Arr::get($input_data_0, 'plate');
-		$input_data=$input_data_0;
-	}
-	 // по формату данных определяю тип источника
-		//Log::instance()->add(Log::NOTICE, '109 Получил данные от CVS '. Debug::vars($input_data));
-	//Log::instance()->add(Log::NOTICE, '67 Получил данные от CVS '. Arr::get($input_data, 'image'));
-		
-		
-		//Log::instance()->add(Log::NOTICE, '250 check');	
-			$last_event=Model::factory('mpt')->getSemafor('lastevent');
-		Log::instance()->add(Log::NOTICE, '255 check');	
-
-		Log::instance()->add(Log::NOTICE, '114 last_event '. $last_event);
-		
-		if($last_event - Arr::get($input_data, 'id') > 1) Log::instance()->add(Log::NOTICE, '78 Потеряны соыбтия с old по new.', array('old'=>$last_event, 'new'=>Arr::get($input_data, 'id') ));
-		Log::instance()->add(Log::NOTICE, "001 Start cvs id_event=".Arr::get($input_data, 'id').', grz '.Arr::get($input_data, 'plate').'. timestamp '.microtime(true).' time_from_start='.number_format((microtime(1) - $t1), 3));
-		if(($last_event == Arr::get($input_data, 'id')) AND (!$this->is_test))
+		if ($this->is_test) 
 		{
-			
-			Log::instance()->add(Log::NOTICE, '78 Повторный пакет от CVS. Delta time='. (time()-strtotime(Arr::get($input_data, 'dateTime'))). ' '.file_get_contents('php://input'));
-			Log::instance()->add(Log::NOTICE, '80 повторный прием события. id нового события new равен номеру ранее обработанного события old. Дальнейша обработка события прекращается.', array('old'=>$last_event, 'new'=>Arr::get($input_data, 'id') ));
-			$this->response->status(200);
-			return;
-			
+			$input_data_0=$this->dataGRZ;
+		} else {
+			$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
 		}
 		
-		//сохраняю номер полученного пакета от CVS
+		//Log::instance()->add(Log::NOTICE, '96 Получил данные от CVS '. Debug::vars($input_data_0));
+		//Log::instance()->add(Log::NOTICE, '97 Получил данные от CVS '. Arr::get($input_data, 'ip'));
+			
+		$input_data=$input_data_0;
+		
+		echo Debug::vars('110', $input_data);//exit;
+		// тут находится фильтр от повторно отправленых сообщений от CVS.
+		// у повторно отправленных сообщений один и тот же номер события.
+		$post=Validation::factory($input_data);
+		$post->rule('id', 'not_empty')//номер события
+					->rule('id', 'digit')
+					->rule('id', 'Model_cvss::isEventUniq') //событие уникальное, не совпадает с ранее обработанным
+					->rule('camera', 'not_empty')//номер видеокамеры
+					->rule('camera', 'digit')
+					->rule('camera', 'Model_cvss::checkCamIsPresent') 
+					->rule('plate', 'not_empty')//значение ГРЗ
+					//->rule('plate', 'max_length', array(':value', 10))
+					->rule('plate', 'regex', array(':value', '/^[A-Za-z\d]{3,10}+$/')) // https://regex101.com/ строк буквы АНГЛ алфавита
+					
+					;
+		if(!$post->check())
+		{
+			
+			Log::instance()->add(Log::NOTICE, '125 Входные данные не полные '. Debug::vars($post->errors()));//вывод номера в лог-файл
+			echo Debug::vars('126 валидация прошла с ошибкой', $post->errors());//exit;
+			$this->response->status(200);
+			return;
+		}
+		//валидация данных прошла успешно, продолжаю обработку
+		echo Debug::vars('129 Валидация данных ГРЗ данных прошла успешно');//exit;
+		$last_event=Model::factory('mpt')->getSemafor('lastevent');//номер последнего обработанного события. Номер взят из файла временного.
+	
+		Log::instance()->add(Log::NOTICE, '114 last_event '. $last_event);//вывод номера в лог-файл
+		
+		//if($last_event - Arr::get($input_data, 'id') > 1) Log::instance()->add(Log::NOTICE, '78 Потеряны соыбтия с old по new.', array('old'=>$last_event, 'new'=>Arr::get($input_data, 'id') ));
+		Log::instance()->add(Log::NOTICE, "001 Start cvs id_event=".Arr::get($input_data, 'id').',
+					grz '.Arr::get($input_data, 'plate').',
+					camera '.Arr::get($input_data, 'camera').',
+					timestamp '.microtime(true).',
+					time_from_start='.number_format((microtime(1) - $t1), 3));
+		
+			
 				
-		Model::factory('mpt')->setSemafor('lastevent', Arr::get($input_data, 'id'));
+		//сохраняю номер полученного пакета от CVS
 		
-		$id_gate = Model::factory('mpt')->getIdGateFromCam(Arr::get($input_data, 'camera'));
+		//echo Debug::vars('150');exit;
 		
-		Log::instance()->add(Log::NOTICE, '133 получил id_gate по номеру камеры'. $id_gate);
+		Model::factory('mpt')->setSemafor('lastevent', Arr::get($input_data, 'id'));//сохранил последний номер обрабатываемого события
+		
+		$id_gate = Model::factory('mpt')->getIdGateFromCam(Arr::get($input_data, 'camera'));//получил номер ворот
+		
+		Log::instance()->add(Log::NOTICE, '133 получил id_gate = :id_gate по номеру камеры=:cam.', array(':id_gate'=>$id_gate, ':cam'=>Arr::get($input_data, 'camera')));
 	
 		//и далее могу проводить валидацию, имея номер ГРЗ и номер ворот.
 	
 	
 		//todo валидация на наличие номера камеры в настройках.
 		
-		 $cvs=new phpCVS(Arr::get($input_data, 'camera'));
-		 
-		 if(!$cvs->id_gate) //для указанной точки проезда нет настроек ворот.
-		 {
-			Log::instance()->add(Log::NOTICE, '117 Для видеокамеры :id_cam настройки вопрот и табло не указаны. Обработку запрос прекращаю.', array(':id_cam'=> Arr::get($input_data, 'camera')));
-			 
-			 
-		 }
-		 
-		 $cvs->grz=Arr::get($input_data, 'plate');//передаю ГРЗ в модель
+		//echo Debug::vars('163');exit;
 		
-
-		$cvs->timeStamp=Arr::get($input_data, 'dateTime', -1);
-		$cvs_event_id=Arr::get($input_data, 'id');
+		
+		 //$cvs=new phpCVS(Arr::get($input_data, 'camera'));
+		 $cvs=new phpCVS(Model_cvss::getGateFromCam(Arr::get($post, 'camera')));
+		 //Log::instance()->add(Log::NOTICE, '117 '. Debug::vars($cvs));
+		 //echo Debug::vars('168', $cvs);exit;
+		
+		$cvs->grz=Arr::get($input_data, 'plate');//передаю ГРЗ в модель
+		$cvs->timeStamp=Arr::get($input_data, 'dateTime', -1);//передал в модель метку времени
+		$cvs_event_id=Arr::get($input_data, 'id');//передал в модель номер события
 		
 		// вызов процесса валидации. Результат валидации сохраняется в $cvs как значения параметров
 		$cvs->check(); 
-		
-		
+		//echo Debug::vars('176', $cvs);exit;
+		Log::instance()->add(Log::NOTICE, '117 '. Debug::vars($cvs));exit;
 		$direct='выезд';
 		if($cvs->isEnter) $direct='въезд';
 		$dt=0;

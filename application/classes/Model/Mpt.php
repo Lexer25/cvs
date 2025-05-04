@@ -83,8 +83,8 @@ class Model_Mpt extends Model {
 		 */
 		 public function getSemafor($semaforName)
 		 {
-				Log::instance()->add(Log::NOTICE, '256 check');	exit;
-				Log::instance()->add(Log::NOTICE, '85 читаю файл '. $semaforName);
+				//Log::instance()->add(Log::NOTICE, '256 check');	exit;
+				//Log::instance()->add(Log::NOTICE, '85 читаю файл '. $semaforName);
 				$contents=0;
 				if($handle = fopen($semaforName, "r"))
 				{
@@ -135,10 +135,10 @@ class Model_Mpt extends Model {
 		 
 			
 			/*
-		 Получить ID ворот по номерку видеокамеры по указанному IP адресу контроллера
+		 Получить ID ворот по номерку видеокамеры 
 		 
 		 */
-		 public function getIdGateFromMPT($id_cam)
+		 public function getIdGateFromCam($id_cam)
 		 {
 			$sql='select hlp.id from hl_param hlp
 			where hlp.id_cam='.$id_cam;
