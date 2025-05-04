@@ -203,7 +203,7 @@ class Controller_Dashboard extends Controller{
 		
 		// вызов процесса валидации. Результат валидации сохраняется в $cvs как значения параметров
 		$cvs->check(); 
-		//echo Debug::vars('176', $cvs);exit;
+		echo Debug::vars('176', $cvs);exit;
 		Log::instance()->add(Log::NOTICE, '117 '. Debug::vars($cvs));exit;
 		$direct='выезд';
 		if($cvs->isEnter) $direct='въезд';
@@ -226,106 +226,95 @@ class Controller_Dashboard extends Controller{
 			'desc'=>' результат проверки данных',
 		));
 		
-		if(($cvs->cam ==1) or ($cvs->cam ==3))
+		/* if(($cvs->cam ==1) or ($cvs->cam ==3))
 		{
 			
 			Log::instance()->add(Log::NOTICE, "998 Stop cam=".$cvs->cam.", cvs=". Arr::get($input_data, 'id').', grz='.$cvs->grz.', code_validation='.$cvs->code_validation.', total_time='.number_format((microtime(1) - $t1), 3).' не обслуживается');
 			return;
 		}
-		
+		 */
 		
 		//$tablo=new phpMPT($cvs->tablo_ip, $cvs->tablo_port); //работа в режиме UDP
-	$tablo=new phpMPTtcp($cvs->tablo_ip, $cvs->tablo_port);//работа в режиме TCP 
+	//начинаю обработку результата
+		$tablo=new phpMPTtcp($cvs->tablo_ip, $cvs->tablo_port);//работа в режиме TCP 
 		
-		
-		
-		
-		
-				
-		//сохраняю в семафор с номером табло номер обрабатываемого события
+			//сохраняю в семафор с номером табло номер обрабатываемого события
 		Model::factory('mpt')->setSemafor('lastevent'.$cvs->cam, $cvs_event_id);
 		
 		//обработка кодов валидации
 		 switch($cvs->code_validation){
 		
 		
-			 case 50 : //проезда разрешен
+			case 50 : //проезда разрешен
 				$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
 				$mpt->openGate($cvs->mode);// даю команду открыть ворота
 			
-			$i=0;
-				while($mpt->result !='OK' AND $i<10)// делать до 10 попыток
+				$i=0;
+					while($mpt->result !='OK' AND $i<10)// делать до 10 попыток
+					{
+						Log::instance()->add(Log::DEBUG, '155 Команда открыть ворота '.$cvs->box_ip.':'.$cvs->box_port.' выполнена неудачно: '.$mpt->result.' desc '.$mpt->edesc.'. timestamp '.microtime(true).'. Команда Открыть ворота повторяется еще раз, попытка '.$i.' time_from_start='.number_format((microtime(1) - $t1), 3));
+						$mpt->openGate($cvs->mode);// открыть ворота
+						$i++;
+					}
+					Log::instance()->add(Log::NOTICE, '004_150 Событие 50. Результат выполнения команды openGate '.$cvs->box_ip.':'.$cvs->box_port.' result='.$mpt->result.', desc='.$mpt->edesc.'  после '. $i .' попыток time_from_start='.number_format((microtime(1) - $t1), 3));		
+				if($mpt->result == 'Err') 
 				{
-					Log::instance()->add(Log::DEBUG, '155 Команда открыть ворота '.$cvs->box_ip.':'.$cvs->box_port.' выполнена неудачно: '.$mpt->result.' desc '.$mpt->edesc.'. timestamp '.microtime(true).'. Команда Открыть ворота повторяется еще раз, попытка '.$i.' time_from_start='.number_format((microtime(1) - $t1), 3));
-					$mpt->openGate($cvs->mode);// открыть ворота
-					$i++;
-					
+					Log::instance()->add(Log::NOTICE, '138 Событие 50. Не смог открыть ворота в течении 10 попыток. Видеокамера '.$cvs->cam.' ('.$direct.') ГРЗ '.$cvs->grz.' контролер IP='.$cvs->box_ip.':'.$cvs->box_port.' Режим шлюза '.$cvs->mode.' Ответ '.$mpt->result.' edesc '.$mpt->edesc);		
+				} else 
+				{
+					Log::instance()->add(Log::NOTICE, '004_64 Событие 50. Ответ контроллера после повторной команды '.$mpt->result.' edesc '.$mpt->edesc.'  после '. $i .' попыток.');		
 				}
+					//теперь занимаюсь выводом информации на табло
 				
-				Log::instance()->add(Log::NOTICE, '004_150 Событие 50. Результат выполнения команды openGate '.$cvs->box_ip.':'.$cvs->box_port.' result='.$mpt->result.', desc='.$mpt->edesc.'  после '. $i .' попыток time_from_start='.number_format((microtime(1) - $t1), 3));		
-						
-			
-			if($mpt->result == 'Err') 
-			{
-				Log::instance()->add(Log::NOTICE, '138 Событие 50. Не смог открыть ворота в течении 10 попыток. Видеокамера '.$cvs->cam.' ('.$direct.') ГРЗ '.$cvs->grz.' контролер IP='.$cvs->box_ip.':'.$cvs->box_port.' Режим шлюза '.$cvs->mode.' Ответ '.$mpt->result.' edesc '.$mpt->edesc);		
+				$tablo->command='clearTablo';
+				$tablo->execute(); 		
+				Log::instance()->add(Log::NOTICE, '152 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
+					
+				$tablo->command='text';// вывод ГРЗ на табло
+				$tablo->commandParam=$cvs->grz;
+				$tablo->coordinate="\x00\x00\x02";
+				$tablo->execute();
+				Log::instance()->add(Log::NOTICE, '158 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
 				
-			} else 
-			{
-				Log::instance()->add(Log::NOTICE, '004_64 Событие 50. Ответ контроллера после повторной команды '.$mpt->result.' edesc '.$mpt->edesc.'  после '. $i .' попыток.');		
-			
-				
-			}
-		//теперь занимаюсь выводом информации на табло
-		
-		$tablo->command='clearTablo';
-		$tablo->execute(); 		
-		Log::instance()->add(Log::NOTICE, '152 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
-			
-		$tablo->command='text';// вывод ГРЗ на табло
-		$tablo->commandParam=$cvs->grz;
-		$tablo->coordinate="\x00\x00\x02";
-		$tablo->execute();
-		Log::instance()->add(Log::NOTICE, '158 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
-		
-		$tablo->command='scrolText';// вывод сообщений на табло
-		$tablo->commandParam=$cvs->eventdMess;
-		$tablo->coordinate="\x08\x00\x02\x01";
-		$tablo->execute();
-		Log::instance()->add(Log::NOTICE, '164 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
-		/* 
-		$tablo->command='scrolText';
-		$tablo->execute(); 	
-		Log::instance()->add(Log::NOTICE, '169 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
-		 */	
+				$tablo->command='scrolText';// вывод сообщений на табло
+				$tablo->commandParam=$cvs->eventdMess;
+				$tablo->coordinate="\x08\x00\x02\x01";
+				$tablo->execute();
+				Log::instance()->add(Log::NOTICE, '164 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
+				/* 
+				$tablo->command='scrolText';
+				$tablo->execute(); 	
+				Log::instance()->add(Log::NOTICE, '169 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+				 */	
 			 
 			 break;
 			 case 46 : //неизвестная карта
-			//для неизвестной карты открывать ворота НЕ надо, поэтому экземпляр МПТ не создается.
-			//работаю только с табло
-		$tablo->command='clearTablo';
-		$tablo->execute(); 	
-		Log::instance()->add(Log::NOTICE, '173 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
-					
-		
-		$tablo->command='text';// вывод ГРЗ на табло
-		$tablo->commandParam=$cvs->grz;
-		$tablo->coordinate="\x00\x00\x03";
-		$tablo->execute();
-		Log::instance()->add(Log::NOTICE, '180 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+					//для неизвестной карты открывать ворота НЕ надо, поэтому экземпляр МПТ не создается.
+					//работаю только с табло
+				$tablo->command='clearTablo';
+				$tablo->execute(); 	
+				Log::instance()->add(Log::NOTICE, '173 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+							
+				
+				$tablo->command='text';// вывод ГРЗ на табло
+				$tablo->commandParam=$cvs->grz;
+				$tablo->coordinate="\x00\x00\x03";
+				$tablo->execute();
+				Log::instance()->add(Log::NOTICE, '180 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
-		
-		$tablo->command='scrolText';// вывод сообщений на табло
-		$tablo->commandParam=$cvs->eventdMess;
-		$tablo->coordinate="\x08\x00\x03\x01";
-		$tablo->execute();
-		Log::instance()->add(Log::NOTICE, '187 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+				
+				$tablo->command='scrolText';// вывод сообщений на табло
+				$tablo->commandParam=$cvs->eventdMess;
+				$tablo->coordinate="\x08\x00\x03\x01";
+				$tablo->execute();
+				Log::instance()->add(Log::NOTICE, '187 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
-		/* 
-		$tablo->command='scrolText';
-		$tablo->execute(); 	
-		Log::instance()->add(Log::NOTICE, '192 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
-		 */
-			 
+				/* 
+				$tablo->command='scrolText';
+				$tablo->execute(); 	
+				Log::instance()->add(Log::NOTICE, '192 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+				 */
+					 
 				
 			 break;
 			 
