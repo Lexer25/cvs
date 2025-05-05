@@ -75,7 +75,7 @@ class Controller_Dashboard extends Controller{
 		} else {
 			$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
 		}
-			echo Debug::vars('78', $input_data_0);
+			//echo Debug::vars('78', $input_data_0);
 		
 		$input_data = $input_data_0;
 		$post=Validation::factory($input_data);
@@ -94,18 +94,18 @@ class Controller_Dashboard extends Controller{
 		{
 			
 			Log::instance()->add(Log::NOTICE, '95 Входные данные UHF не полные '. Debug::vars($post->errors()));//вывод номера в лог-файл
-			echo Debug::vars('96 валидация UHF прошла с ошибкой', $post->errors());//exit;
+			//echo Debug::vars('96 валидация UHF прошла с ошибкой', $post->errors());//exit;
 			$this->response->status(200);
 			return;
 		}
 		//echo Debug::vars('101', Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip')));exit;
 		$cvs=new phpCVS(Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip')));
-		echo Debug::vars('103', $cvs);//exit;	
+		//echo Debug::vars('103', $cvs);//exit;	
 		$cvs->grz=Arr::get($input_data, 'key');//передаю ГРЗ в модель
 		//$cvs->timeStamp=Arr::get($input_data, 'dateTime', -1);//передал в модель метку времени
 		//$cvs_event_id=Arr::get($input_data, 'id');//передал в модель номер события
 		$cvs->check(); 
-		echo Debug::vars('105', $cvs);exit;
+		//echo Debug::vars('105', $cvs);exit;
 				
 		
 	$this->response->body($mess);
@@ -136,7 +136,7 @@ class Controller_Dashboard extends Controller{
 			
 		$input_data=$input_data_0;
 		
-		echo Debug::vars('110', $input_data);//exit;
+		//echo Debug::vars('110', $input_data);//exit;
 		// тут находится фильтр от повторно отправленых сообщений от CVS.
 		// у повторно отправленных сообщений один и тот же номер события.
 		$post=Validation::factory($input_data);
@@ -155,12 +155,12 @@ class Controller_Dashboard extends Controller{
 		{
 			
 			Log::instance()->add(Log::NOTICE, '125 Входные данные не полные '. Debug::vars($post->errors()));//вывод номера в лог-файл
-			echo Debug::vars('126 валидация прошла с ошибкой', $post->errors());//exit;
+			//echo Debug::vars('126 валидация прошла с ошибкой', $post->errors());//exit;
 			$this->response->status(200);
 			return;
 		}
 		//валидация данных прошла успешно, продолжаю обработку
-		echo Debug::vars('129 Валидация данных ГРЗ данных прошла успешно');//exit;
+		//echo Debug::vars('129 Валидация данных ГРЗ данных прошла успешно');//exit;
 		$last_event=Model::factory('mpt')->getSemafor('lastevent');//номер последнего обработанного события. Номер взят из файла временного.
 	
 		Log::instance()->add(Log::NOTICE, '114 last_event '. $last_event);//вывод номера в лог-файл
@@ -203,12 +203,14 @@ class Controller_Dashboard extends Controller{
 		
 		// вызов процесса валидации. Результат валидации сохраняется в $cvs как значения параметров
 		$cvs->check(); 
-		echo Debug::vars('176', $cvs);exit;
-		Log::instance()->add(Log::NOTICE, '117 '. Debug::vars($cvs));exit;
+		//echo Debug::vars('176', $cvs);exit;
+		
+		Log::instance()->add(Log::NOTICE, '117 '. Debug::vars($cvs));
 		$direct='выезд';
 		if($cvs->isEnter) $direct='въезд';
 		$dt=0;
 		$dt=time()-strtotime($cvs->timeStamp);
+		
 		//фиксирую результат валидации
 		Log::instance()->add(Log::NOTICE, "004 cam\tcode_validation\tgrz\ttimestamp\tdirect\tcvs_event_id\ttexec\tdesc",
 		array(
@@ -416,6 +418,7 @@ class Controller_Dashboard extends Controller{
 		
 		
 	Log::instance()->add(Log::NOTICE, "999 Stop cam=".$cvs->cam.", cvs=". Arr::get($input_data, 'id').', grz='.$cvs->grz.', code_validation='.$cvs->code_validation.', total_time='.number_format((microtime(1) - $t1), 3)."\r\n");	
+	//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
 		return;
 	}
 
