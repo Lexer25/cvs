@@ -1,5 +1,15 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 
+/**
+* @package    cvstest
+ * @category   Base
+ * @author     Artonit
+ * @copyright  (c) 2025 Artonit Team
+ * @license    http://artonit/ru 
+ 
+ */
+ 
+ 
 //class Controller_Dashboard extends Controller_Template {
 class Controller_cvstest extends Controller{
 

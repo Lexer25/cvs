@@ -86,9 +86,12 @@ class phpCVS
 
  public function check()
     {
-       
+      
+		
 		$sql='select rc as event_type, id_pep from REGISTERPASS_HL_2('.$this->id_dev.', \''.$this->grz.'\', NULL)';
 		//echo Debug::vars('92', $sql);exit;
+		
+		Log::instance()->add(Log::NOTICE, '193 '. $sql); 
 		$query = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->as_array();
@@ -97,6 +100,9 @@ class phpCVS
 		$this->getMessForEvent(Arr::get($query, 'EVENT_TYPE'));
 		//$this->getMessForIdle();
 		$this->code_validation = Arr::get($query, 'EVENT_TYPE');
+		
+		
+		
 		return;
     }
 	

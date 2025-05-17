@@ -46,10 +46,12 @@ where hlp.box_ip=\''.$ip.'\'';
 	/**Получить id ворот по IP адресу контроллера
 	*@param $cam номер видеокамеры
 	*/
-	public static function getGateFromBoxIp ($ip) // 
+	public static function getGateFromBoxIp ($ip, $port) // 
 	{
 	$sql='select hlp.id from hl_param hlp
-	where hlp.box_ip=\''.$ip.'\'';
+	where hlp.box_ip=\''.$ip.'\'
+	and hlp.channel='.$port;
+	Log::instance()->add(Log::DEBUG, '54 '.$sql);
 	return( DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->get('ID'));

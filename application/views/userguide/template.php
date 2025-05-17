@@ -17,7 +17,7 @@
 
 	<div id="kodoc-header">
 		<div class="container">
-			<a href="/city" id="kodoc-logo">
+			<a href="/cvs" id="kodoc-logo">
 				<img src="<?php echo Route::url('docs/media', array('file' => 'img/logo_artonit_ru_2014.png')) ?>" width=191 />
 			</a>
 			<div id="kodoc-menu">

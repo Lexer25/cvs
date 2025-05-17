@@ -7,7 +7,8 @@ return array(
 	// Enable these packages in the API browser.  TRUE for all packages, or a string of comma seperated packages, using 'None' for a class with no @package
 	// Example: 'api_packages' => 'Kohana,Kohana/Database,Kohana/ORM,None',
 		//'api_packages' => true,
-		'api_packages' => 'Kohana/Database',
+		'api_packages' => 'dashboard, Tools, cvtTest',
+		//'api_packages' => 'None',
 
 	// Enables Disqus comments on the API and User Guide pages
 	//'show_comments' => Kohana::$environment === Kohana::PRODUCTION,
@@ -17,25 +18,29 @@ return array(
 	'modules' => array(
 
 		// This should be the path to this modules userguide pages, without the 'guide/'. Ex: '/guide/modulename/' would be 'modulename'
-		'city' => array(
-
-			// Whether this modules userguide pages should be shown
-				'enabled' => FALSE,
-
-			// The name that should show up on the userguide index page
-			'name' => 'Артонит Сити',
-
-			// A short description of this module, shown on the index page
-			'description' => 'СКУД для жилых комплексов',
-
-			// Copyright message, shown in the footer for this module
-			'copyright' => '&copy; 2008–2017 Artsec',
-		),
-		
-		'kohana' => array(
+		'cvs' => array(
 
 			// Whether this modules userguide pages should be shown
 				'enabled' => true,
+
+			// The name that should show up on the userguide index page
+			'name' => 'cvs',
+
+			// A short description of this module, shown on the index page
+			'description' => 'Парковочная система для жилых комплексов',
+
+			// Copyright message, shown in the footer for this module
+			'copyright' => '&copy; 2008–2025 Artsec',
+		),
+		
+		'Auth' => array
+        (
+            'enabled' => FALSE,
+        ),
+		'kohana' => array(
+
+			// Whether this modules userguide pages should be shown
+				'enabled' => false,
 
 			// The name that should show up on the userguide index page
 			'name' => 'Kohana',
@@ -50,7 +55,7 @@ return array(
 		'userguide' => array(
 
 			// Whether this modules userguide pages should be shown
-				'enabled' => true,
+				'enabled' => false,
 			
 			// The name that should show up on the userguide index page
 			'name' => 'Userguide',
@@ -61,5 +66,28 @@ return array(
 			// Copyright message, shown in the footer for this module
 			'copyright' => '&copy; 2008–2012 Kohana Team',
 		),
+		
+		'image' => array(
+
+			'enabled' => false,
+		)	,
+		
+		'minion' => array(
+
+			'enabled' => false,
+		),	
+		'database' => array(
+
+			'enabled' => false,
+		),	
+		'auth' => array(
+
+			'enabled' => false,
+		),	
+		'arr' => array(
+
+			'enabled' => false,
+		),	
+		
 	)
 );
