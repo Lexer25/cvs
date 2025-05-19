@@ -51,7 +51,7 @@ where hlp.box_ip=\''.$ip.'\'';
 	$sql='select hlp.id from hl_param hlp
 	where hlp.box_ip=\''.$ip.'\'
 	and hlp.channel='.$port;
-	Log::instance()->add(Log::DEBUG, '54 '.$sql);
+	//Log::instance()->add(Log::DEBUG, '54 '.$sql);
 	return( DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->get('ID'));

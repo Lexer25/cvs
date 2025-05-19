@@ -108,7 +108,7 @@ class phpMPTtcp
 			try
 			{
 				$byte_send=socket_write($this->socket, $command, strlen($command));
-				Log::instance()->add(Log::NOTICE, 'phpMPTtcp-82-phpMPT-sendCommand protocol '.$this->protocol.' '.$this->address.':'.$this->port.' timestamp '.microtime(true).' отправлен акет '.implode (",", unpack("C*",$command)).', ответ '.$byte_send);
+				//Log::instance()->add(Log::NOTICE, 'phpMPTtcp-82-phpMPT-sendCommand protocol '.$this->protocol.' '.$this->address.':'.$this->port.' timestamp '.microtime(true).' отправлен акет '.implode (",", unpack("C*",$command)).', ответ '.$byte_send);
 				
 				
 				//раздел UDP ==================================
@@ -117,7 +117,7 @@ class phpMPTtcp
 			{
 				usleep($this->udp_delay);
 				$reply = socket_read($this->socket,4096);
-				Log::instance()->add(Log::NOTICE, '86-phpMPTtcp-recievCommand '.$this->address.':'.$this->port.' timestamp '.microtime(true).' получен ответ  '.implode (",", unpack("C*",$reply)));
+				//Log::instance()->add(Log::NOTICE, '86-phpMPTtcp-recievCommand '.$this->address.':'.$this->port.' timestamp '.microtime(true).' получен ответ  '.implode (",", unpack("C*",$reply)));
 			};	
 				
 				//==============================================
@@ -145,6 +145,9 @@ class phpMPTtcp
 			
 		} else {
 				$reply ='No connection';
+				Log::instance()->add(Log::NOTICE, 'phpMPTtcp-148-phpMPT-sendCommand protocol '.$this->protocol.' '.$this->address.':'.$this->port.' нет коннекта');
+				
+				
 				
 			}
 			
@@ -214,6 +217,8 @@ class phpMPTtcp
 	
 	public function execute()// выполнение команды $this->command  
 	{
+	
+		
 		$this->connect();
 		$_command=$this->make_binary_command($this->command);
 		$_answer=$this->sendCommand($_command);
@@ -318,12 +323,15 @@ class phpMPTtcp
    public function openGate($mode)// открытие ворот с учетом режима работы
 	{
 		//echo Debug::vars('241', $mode ); exit;
+		
+		Log::instance()->add(Log::NOTICE, "326 mode number ". $mode); 
+		//$mode=1;
 		if($mode ==0)//открываю дверь 0
 		{
 			$this->command='opendoor';
 			$this->commandParam="\x00";
 			$this->execute();
-			
+			Log::instance()->add(Log::NOTICE, "333 open door 0 ". $mode); 
 			
 		}
 		
@@ -332,6 +340,7 @@ class phpMPTtcp
 			$this->command='opendoor';
 			$this->commandParam="\x01";
 			$this->execute();
+			Log::instance()->add(Log::NOTICE, "343 open door 1 ". $mode); 
 		}
 		
 		
@@ -344,7 +353,10 @@ class phpMPTtcp
 			$this->command='opendoor';
 			$this->commandParam="\x01";
 			$this->execute();
+			
+			Log::instance()->add(Log::NOTICE, "357 open both door ". $mode); 
 		}
+		
 		
 		
 		if($mode ==3)//открываю все двери

@@ -13,6 +13,7 @@ class phpCVS
 	public $tablo_port;	/* порт табло*/
 	public $box_ip;		/* IP адрес шкафа управления*/
 	public $box_port;	/* порт шкафа управления*/
+	public $ch;	/* номер канала*/
 	public $id_gate;		/* номер ворот*/
 	public $id_dev;		/* id_dev, обслуживающий эти ворота*/
 	public $mode;		/* режим работы ворот*/
@@ -26,7 +27,6 @@ class phpCVS
 
 	
 	
-	//конструктор "работает" но номеру камеры, т.к. это единственный уникальный идентификатор источника данных.
 	//конструктор "работает" но номеру ворот.
     public function __construct($id)
     {
@@ -40,10 +40,11 @@ class phpCVS
 					hlp.id_parking,
 					hlp.is_enter,
 					hlp.is_enter,
-					hlp.id_cam					
+					hlp.id_cam,
+                    hlp.channel as ch					
 					from hl_param hlp where hlp.id='.$id;
 					//echo Debug::vars('40', $sql);exit;
-					
+		//Log::instance()->add(Log::NOTICE, '46'. $sql);			
 	   $query = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->as_array();
@@ -59,6 +60,7 @@ class phpCVS
 					$this->id_parking=Arr::get($query, 'ID_PARKING');
 					$this->isEnter=Arr::get($query, 'IS_ENTER');
 					$this->cam=Arr::get($query, 'ID_CAM');
+					$this->ch=Arr::get($query, 'CH');
 					
 			$this->getMessForIdle();
 			return;
@@ -91,7 +93,7 @@ class phpCVS
 		$sql='select rc as event_type, id_pep from REGISTERPASS_HL_2('.$this->id_dev.', \''.$this->grz.'\', NULL)';
 		//echo Debug::vars('92', $sql);exit;
 		
-		Log::instance()->add(Log::NOTICE, '193 '. $sql); 
+		//Log::instance()->add(Log::NOTICE, '193 '. $sql); 
 		$query = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->as_array();
