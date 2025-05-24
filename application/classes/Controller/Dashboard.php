@@ -148,11 +148,12 @@ class Controller_Dashboard extends Controller{
 		
 		//Определяю ворота
 		$id_gate=Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip'), Arr::get($post, 'ch'));
-		Log::instance()->add(Log::NOTICE, '160 Получены данные ch = :ch, ip=:ip, key= ":key", это ворота :gate',
+		Log::instance()->add(Log::NOTICE, '160 Получены данные ch = :ch, ip=:ip, key= ":key" (:keyDec), это ворота :gate',
 					array( 
 						':ip'=>Arr::get($post, 'ip'),
 						':ch'=>Arr::get($post, 'ch'),
 						':key'=>Arr::get($post, 'key'),
+						':keyDec'=>hexdec(Arr::get($post, 'key')),
 						':gate'=>$id_gate
 						)); 
 		
@@ -176,12 +177,11 @@ class Controller_Dashboard extends Controller{
 	//Результатом этапа являются параметры $cvs->code_validation
 	//В процессе валидации заполняются таблицы базы данных, автоматически фиксируя проезд.
 		$cvs=new phpCVS($id_gate);
-		$cvs->grz=Arr::get($input_data, 'key');//передаю ГРЗ в модель
+		$cvs->grz=hexdec(Arr::get($input_data, 'key'));//передаю UHF в модель
 		
 		
 		// ПРОВЕРКА: МОЖНО ЛИ ВЪЕЗЖАТЬ???
 		$cvs->check(); 
-
 
 
 		$direct='выезд';
@@ -192,7 +192,7 @@ class Controller_Dashboard extends Controller{
 							':ip'=>$cvs->box_ip,
 							':channel'=>$cvs->ch,
 							':id_dev'=>$cvs->id_dev,
-							':key'=>Arr::get($input_data, 'key'),
+							':key'=>$cvs->grz,
 							':direct'=>$direct,
 							':validate'=>$cvs->code_validation,
 							));		
@@ -230,7 +230,7 @@ class Controller_Dashboard extends Controller{
 		//если включен режим Тест (в конфигураторе, файл config), то надо возращать результат 145 (прохода в режиме Тест).
 		//результатом работы этого этапа является:
 		//коррекция сообщения для вывода на табло cvs->eventdMess 
-	   Log::instance()->add(Log::NOTICE, '223 start gateControl '.Debug::vars($cvs)); 
+	   //Log::instance()->add(Log::NOTICE, '223 start gateControl '.Debug::vars($cvs)); 
 			
 	   $config = Kohana::$config->load('config');
 		if(Arr::get($config, 'testMode'))
@@ -304,7 +304,7 @@ class Controller_Dashboard extends Controller{
 		
 			case 50 : //проезда разрешен
 				$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
-				Log::instance()->add(Log::NOTICE, '307-307  '.Debug::vars($mpt));
+				//Log::instance()->add(Log::NOTICE, '307-307  '.Debug::vars($mpt));
 				$mpt->openGate($cvs->mode);// даю команду открыть ворота
 			
 				$i=0;
@@ -454,7 +454,7 @@ class Controller_Dashboard extends Controller{
 	{	
 		//echo Debug::vars('89', Model::factory('mpt')->getSemafor('lastevent'));exit;
 		//Model::factory('mpt')->setSemafor('123', '456');
-		Log::instance()->add(Log::NOTICE, '456 start svc '.Debug::vars($this->request));
+		//Log::instance()->add(Log::NOTICE, '456 start svc '.Debug::vars($this->request));
 		
 		$t1=microtime(1);
 		Log::instance()->add(Log::NOTICE, "000\r\n");//запись в лог о начале приема-начале обработки
