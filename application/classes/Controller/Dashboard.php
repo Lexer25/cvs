@@ -143,7 +143,8 @@ class Controller_Dashboard extends Controller{
 	//Результатом этапа являются параметры $cvs->code_validation
 	//В процессе валидации заполняются таблицы базы данных, автоматически фиксируя проезд.
 		$cvs=new phpCVS($id_gate);
-		$cvs->grz=hexdec(Arr::get($input_data, 'key'));//передаю UHF в модель
+		//$cvs->grz=hexdec(Arr::get($input_data, 'key'));//передаю UHF в модель
+		$cvs->grz=(Arr::get($input_data, 'key'));//передаю UHF в модель
 		
 		
 		// ПРОВЕРКА: МОЖНО ЛИ ВЪЕЗЖАТЬ???
