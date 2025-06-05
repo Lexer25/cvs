@@ -102,9 +102,34 @@ class phpCVS
 		$this->getMessForEvent(Arr::get($query, 'EVENT_TYPE'));
 		//$this->getMessForIdle();
 		$this->code_validation = Arr::get($query, 'EVENT_TYPE');
+		return;
+    }
+	
+	
+	/** 05.06.2025
+	*Процесс валидации ГРЗ в указанной точке проезда
+	*@param id_dev - точка проезда
+	*@param GRZ - номерной знак
+	*@return void
+	*в отличии от check() не делает записи в базе данных СКУД.
+	*/
+
+	 public function validation()
+    {
+      
 		
+		$sql='select EVENT_TYPE as event_type, id_pep from VALIDATEPASS_HL_PARKING_2('.$this->id_dev.', \''.$this->grz.'\', NULL)';
+		//echo Debug::vars('92', $sql);exit;
 		
+		//Log::instance()->add(Log::NOTICE, '193 '. $sql); 
+		$query = DB::query(Database::SELECT, $sql)
+			->execute(Database::instance('fb'))
+			->as_array();
 		
+		$query=Arr::get($query, 0);
+		$this->getMessForEvent(Arr::get($query, 'EVENT_TYPE'));
+		//$this->getMessForIdle();
+		$this->code_validation = Arr::get($query, 'EVENT_TYPE');
 		return;
     }
 	

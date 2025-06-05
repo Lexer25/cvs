@@ -78,7 +78,10 @@ class Controller_Dashboard extends Controller{
 	
 	}
 	
-
+	/**прием данных от МПТ. Тут могут быть данные о полученном RFID и о измении состояния индуктивной петли loop.
+	*
+	*
+	*/
 	
 	public function action_sendMPT()
 	{	
@@ -102,14 +105,97 @@ class Controller_Dashboard extends Controller{
 		
 		$input_data = $input_data_0;
 		
+		$post=Validation::factory($input_data);
+		$post->rule('ip', 'not_empty')//IP контроллера должен быть
+					->rule('ip', 'ip')
+					->rule('ip', 'Model_cvss::checkIpIsPresent') 
+					;
+		if(!$post->check())
+		{
+			
+			Log::instance()->add(Log::NOTICE, '116 получены данные от незарегистрированного IP адреса. '. Debug::vars($post->errors()));//вывод номера в лог-файл
+			Log::instance()->add(Log::NOTICE, '131 Обработку данных прекращаю.');//вывод номера в лог-файл
+			$this->response->status(400);
+			return;
+		}
+		//определение источника: rfid или loop
+		if(array_key_exists('key', $_POST)) 
+		{
+			//вставляю результат в базу данных S2, чтобы зафиксировать результат валидации (с меткой времени).
+			$cvs = $this->rfidHandler($input_data);//источник данных - rfid
+			// вставка в S2!!!
+			//вызов обработчика S2. возможно, что машина уже стоит на индуктивной петле, и можно сразу открывать ворота.
+			$this->gateControlS2('rfid');
+		}
+		if(array_key_exists('pin', $_POST)) //источник данных - loop
+		{
+			$this->loopHandler();//обработка сигналов от индукционной петли. Например, включить или выключить индикацию
+			//надо включить индикацию на табло, чтобы показать, что "видим" автомобиль.
+			//вызов обработчика S2: можно ли проезжать? или отказ?
+			$this->gateControlS2('loop');
+			
+		}
 		
+		Log::instance()->add(Log::NOTICE, '136 sendMPT завершил свою работу.');
+			
+	}
+	
+	
+	/**5.06.2025 Обработка результата с учетом состояния индуктивной петли и ранее полученных данных
+	* необходимо обработать набор данных	uhf | loop | plate с возможными временными интервалами.
+	*
+	*/
+	$function gateControlS2($mode)
+	{
+		switch ($mode){
+			case 'rfid':
+				//проверить: если машина на петле, и код валидации 50, то открывать ворота.
+				//если код не 50, то выводить причину отказа
+			
+			break;
+			case 'loop':
+				//есть ли данные от rfid или uhf за допустимый отрезок времени?
+				
+			
+			break;
+			case 'plate':
+				//проверить: если машина на петле, и код валидации 50, то открывать ворота.
+				//если код не 50, то выводить причину отказа
+			
+			break;
+			default:
+				//вывод сообщения об ошибке
+			
+			break;
+			
+		}
+		
+	}
+	
+	
+	/**обработка сигнала от идукционной петли
+	*
+	*/
+	public function loopHandler()
+	{
+		
+		
+	}
+	
+	
+	
+	/** 5.06.2025 Обработка полученного RFID
+	*@input массив данных, содержащий key и номер канала
+	*@output запись результата в промежуточную таблицу s2.sqlite
+	*/
+	
+	public function rfidHandler($input_data)
+	{
 		//Log::instance()->add(Log::NOTICE, '81 Получил данные UHF '. Debug::vars($input_data));
+		$t1=microtime(true);
 		$post=Validation::factory($input_data);
 		$post->rule('ch', 'not_empty')//номер канала должен быть 
 					->rule('ch', 'digit')
-					->rule('ip', 'not_empty')//IP контроллера должен быть
-					->rule('ip', 'ip')
-					->rule('ip', 'Model_cvss::checkIpIsPresent') 
 					->rule('key', 'not_empty')//значение ГРЗ
 					->rule('key', 'regex', array(':value', '/^[ABCDEF\d]{3,8}+$/')) // https://regex101.com/ строк буквы АНГЛ алфавита
 					
@@ -117,13 +203,12 @@ class Controller_Dashboard extends Controller{
 				
 		if(!$post->check())
 		{
-			
-			Log::instance()->add(Log::NOTICE, '95 Входные данные UHF не полные '. Debug::vars($post->errors()));//вывод номера в лог-файл
-			Log::instance()->add(Log::NOTICE, '131 Обработку UHF прекращаю.');//вывод номера в лог-файл
+			Log::instance()->add(Log::NOTICE, '146 Входные данные UHF не полные '. Debug::vars($post->errors()));//вывод ошибки валидации в лог-файл
+			Log::instance()->add(Log::NOTICE, '147 Обработку UHF прекращаю.');//вывод номера в лог-файл
 			$this->response->status(400);
 			return;
 		}
-		Log::instance()->add(Log::NOTICE, '140 Валидация UHF выполнена успешно, продолжаю работу.');//вывод номера в лог-файл
+		Log::instance()->add(Log::NOTICE, '140 Валидация RFID выполнена успешно, продолжаю работу.');//вывод номера в лог-файл
 		
 		
 		//Определяю ворота
@@ -139,18 +224,19 @@ class Controller_Dashboard extends Controller{
 		
 	
 	//Этап 2.
-	//Создаю экземпляр класса. Это необходимо для проверки разрешения на въезд
+	//Создаю экземпляр класса ворот. Это необходимо для проверки разрешения на въезд
 	//Результатом этапа являются параметры $cvs->code_validation
-	//В процессе валидации заполняются таблицы базы данных, автоматически фиксируя проезд.
+	//5.06.2025 НЕТ!!! В процессе валидации заполняются таблицы базы данных, автоматически фиксируя проезд.-- как раз НЕ фиксируется в БД ничего!!! Только проверка: можно ли выехать? обработка результат осуществляется в других процедурах
 		$cvs=new phpCVS($id_gate);
 		//$cvs->grz=hexdec(Arr::get($input_data, 'key'));//передаю UHF в модель
 		$cvs->grz=(Arr::get($input_data, 'key'));//передаю UHF в модель
 		
 		
 		// ПРОВЕРКА: МОЖНО ЛИ ВЪЕЗЖАТЬ???
-		$cvs->check(); 
+		//$cvs->check(); 
+		$cvs->validation(); 
 
-
+		Log::instance()->add(Log::NOTICE, '154 '. Debug::vars($cvs));
 		$direct='выезд';
 		if($cvs->isEnter) $direct='въезд';
 		
@@ -169,7 +255,7 @@ class Controller_Dashboard extends Controller{
 		//============================= Управление воротами!!!
 		//если это не режим ТЕСТ, то можно передавать управление воротам.
 
-		if(!Arr::get($input_data_0, 'test'))
+		if(!Arr::get($input_data, 'test'))
 		{
 			
 			$this->gateControl($cvs);
@@ -271,7 +357,6 @@ class Controller_Dashboard extends Controller{
 		
 			case 50 : //проезда разрешен
 				$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
-				//Log::instance()->add(Log::NOTICE, '307-307  '.Debug::vars($mpt));
 				$mpt->openGate($cvs->mode);// даю команду открыть ворота
 			
 				$i=0;
@@ -503,10 +588,12 @@ class Controller_Dashboard extends Controller{
 		$cvs_event_id=Arr::get($input_data, 'id');//передал в модель номер события
 		
 		// вызов процесса валидации. Результат валидации сохраняется в $cvs как значения параметров
-		$cvs->check(); 
+		//$cvs->check(); 
+		$cvs->validation(); 
 		//echo Debug::vars('176', $cvs);exit;
 		
-		//Log::instance()->add(Log::NOTICE, '117 '. Debug::vars($cvs));
+		Log::instance()->add(Log::NOTICE, '510 '. Debug::vars($cvs));
+		
 		$direct='выезд';
 		if($cvs->isEnter) $direct='въезд';
 		$dt=0;
@@ -521,10 +608,8 @@ class Controller_Dashboard extends Controller{
 							':validate'=>$cvs->code_validation,
 							));
 		$this->response->status(200);
-		//return;
-		
-		
-	//============================= Управление воротами!!!
+		//обработка ГРЗ завершена, результат валидации известен и хранится в переменной $cvs
+		//============================= Управление воротами!!!
 		//если это не режим ТЕСТ, то можно передавать управление воротам.
 
 		if(!Arr::get($input_data, 'test'))
@@ -537,23 +622,6 @@ class Controller_Dashboard extends Controller{
 		}
 	
 	
-	$t2=microtime(1);
-	
-	/* Log::instance()->add(Log::NOTICE, "005 cam\tcode_validation\tgrz\ttimestamp\tdirect\tcvs_event_id\texecTime\tdesc",
-		array(
-			'cvs_event_id'=>$cvs_event_id,
-			'timestamp'=>date("Y-m-d H:i:s", strtotime($cvs->timeStamp)),
-			'cam'=>$cvs->cam,
-			'direct'=>$direct,
-			'tablo_port'=>$cvs->tablo_ip,
-			'tablo_port'=>$cvs->tablo_port,
-			'grz'=>$cvs->grz,
-			'code_validation'=>$cvs->code_validation,
-			'eventdMess'=>iconv('windows-1251','UTF-8',$cvs->eventdMess),
-			'execTime'=>number_format(($t2 - $t1), 3),
-			'desc'=>' обработка данных завершена',
-		)); */
-		
 		$t2=microtime(1);
 
 	
