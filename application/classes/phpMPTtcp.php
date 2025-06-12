@@ -23,6 +23,7 @@ class phpMPTtcp
     public $codeCommand;            /* код команды контроллера */
     public $udp_delay = 500000;            /* задержка при получении ответа UDP */
     public $protocol = 1;            /* 0 - UDP, 1 - TCP */
+    public $edesc;            /* Описание возникшей ошибки. Заполняется если result == err */
    
 
     
@@ -56,8 +57,11 @@ class phpMPTtcp
 	 
 	
 	if (false === $this->socket) { 
-				Log::instance()->add(Log::NOTICE, "44 Couldn't create socket, error code is: " . iconv('windows-1251','UTF-8',socket_last_error()) . ",error message is: " . iconv('windows-1251','UTF-8', socket_strerror(socket_last_error())));
-			exit;
+			Log::instance()->add(Log::NOTICE, "44 Couldn't create socket, error code is: " . iconv('windows-1251','UTF-8',socket_last_error()) . ",error message is: " . iconv('windows-1251','UTF-8', socket_strerror(socket_last_error())));
+			$this->result='err';
+			$this->edesc=socket_strerror(socket_last_error());
+			return false;
+			//exit;
 			} else {
 				
 			//	Log::instance()->add(Log::NOTICE, "48 Socket создан успешно"); 	
@@ -69,7 +73,9 @@ class phpMPTtcp
 		
 		if ($this->connection === false)      
 		{
-			Log::instance()->add(Log::NOTICE, "55 Cannot connect to server".$this->address.":". $this->port);
+			Log::instance()->add(Log::NOTICE, "55 Cannot connect to device ".$this->address.":". $this->port);
+			$this->result='err';
+			$this->edesc="Cannot connect to device ".$this->address.":". $this->port;
 			return FALSE;
 		} else {
 			//Log::instance()->add(Log::NOTICE, "60 OK connect to server".$this->address.":". $this->port);
@@ -212,21 +218,23 @@ class phpMPTtcp
 	}
 	
 	/*
-	Отправка подготовленного UDP пакета
+	Отправка подготовленного TCP пакета
 	*/
 	
 	public function execute()// выполнение команды $this->command  
 	{
 	
 		
-		$this->connect();
+		if($this->connect())
+		{
 		$_command=$this->make_binary_command($this->command);
 		$_answer=$this->sendCommand($_command);
 	
 		$this->checkAnswer($_answer);//заполняют свойства result и answer
 		$this->close();
 		
-		return;
+		} 
+		return $this;
 		
 	}
 	
@@ -320,6 +328,11 @@ class phpMPTtcp
 		return;
 	}
    
+   
+   /**реализация команды управления реле (дверями, воротами).
+   *
+   *@return возвращается весь класс $this, в котором надо анализировать result и 
+   */
    public function openGate($mode)// открытие ворот с учетом режима работы
 	{
 		//echo Debug::vars('241', $mode ); exit;
@@ -367,11 +380,8 @@ class phpMPTtcp
 
 		}
 		
-		
-		
-		
-		
-		return;
+			
+		return $this;
 	}
    
    

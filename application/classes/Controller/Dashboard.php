@@ -145,7 +145,7 @@ class Controller_Dashboard extends Controller{
 	* необходимо обработать набор данных	uhf | loop | plate с возможными временными интервалами.
 	*
 	*/
-	$function gateControlS2($mode)
+	function gateControlS2($mode)
 	{
 		switch ($mode){
 			case 'rfid':
@@ -485,15 +485,23 @@ class Controller_Dashboard extends Controller{
 	{
 		
 		
-		$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
+		//$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
+		Log::instance()->add(Log::NOTICE, '489 '. Debug::vars($_POST));
+		//Log::instance()->add(Log::NOTICE, '490 '. Debug::vars($input_data_0));
+		$id_gate=Arr::get($_POST, 'id');
 		
-		$id_gate=Arr::get($input_data_0, 'id');
+		
 		$cvs=new phpCVS($id_gate);// сделал экземпляр, чтобы получить IP, port, и номер канала ch
 		
 		$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
-		$mpt->openGate($cvs->ch);// даю команду открыть ворота
-		//Log::instance()->add(Log::NOTICE, '426 '. Debug::vars($mpt));
-		Log::instance()->add(Log::NOTICE, '427 открыл ворота :id :ip :port :ch', array(':id'=>$id_gate, ':ip'=>$cvs->box_ip, ':port'=>$cvs->box_port, ':ch'=>$cvs->ch));
+		$result=$mpt->openGate($cvs->ch);// даю команду открыть ворота. Результат может быть разный: от  подключения к контроллера до ошибки в протоколе.
+		
+		Log::instance()->add(Log::NOTICE, '499 открыл ворота id=:id ip=:ip port=:port ch=:ch', array(':id'=>$id_gate, ':ip'=>$cvs->box_ip, ':port'=>$cvs->box_port, ':ch'=>$cvs->ch));
+		Log::instance()->add(Log::NOTICE, '500 результат выполнения команды открытия ворот :res', array(':res'=>Debug::vars($result)));
+		//надо вернуть ответ
+		$this->response
+            ->headers('Content-Type', 'application/json')
+            ->body(json_encode($result));
 		
 		//послать команду Открыть дверь.
 		
