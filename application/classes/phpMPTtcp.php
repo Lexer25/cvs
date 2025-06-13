@@ -36,26 +36,57 @@ class phpMPTtcp
 		
     }
 
+	public function connect_unblock()
+	//public function connect()
+	{
+		 $t1=microtime(true);
+		 $this->socket= socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+		 // switch to non-blocking
+			socket_set_nonblock($this->socket);
+		
+		// Пытаемся подключиться (вернёт false, но запустит соединение)
+		if (socket_connect($this->socket, $this->address, $this->port) === false) {
+			$error = socket_last_error($this->socket);
+			if ($error !== SOCKET_EINPROGRESS && $error !== SOCKET_EWOULDBLOCK) {
+				die("Ошибка: " . socket_strerror($error));
+			}
+			}
 
+			// Ждём подключения 5 секунд
+			$write = array($this->socket);
+			$except =array($this->socket);
+			$timeout = 5; // секунд
+
+			// socket_select проверяет, готов ли сокет к записи (подключение успешно)
+			if (socket_select($write, $except, $write, $timeout) > 0) {
+				//echo "Подключение успешно!";
+				Log::instance()->add(Log::NOTICE, "62 check. Успешно  ".(microtime(true) - $t1));
+			} else {
+				//echo "Таймаут подключения!";
+				Log::instance()->add(Log::NOTICE, "65 check. Не Успешно, время истекло.  ".(microtime(true) - $t1));
+			}
+						
+	}
+	
    
     public function connect()
     {
-    
-	
-	 
+  	  $t1=microtime(true);
 	  if($this->protocol == 0)  //открываю сокет UDP 
 	  {
 		  $this->socket= @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 		  $this->port=1985;
 	  }
-	  
 	  if($this->protocol == 1)  //открываю сокет TCP 
 	  {
 		  $this->socket= socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+		  socket_set_option($this->socket,SOL_SOCKET, SO_SNDTIMEO , array("sec"=>3, "usec"=>0));//2025
+		  socket_set_option($this->socket,SOL_SOCKET, SO_RCVTIMEO , array("sec"=>3, "usec"=>0));//2025
+		 
 		  $this->port=8000;
 	  }
-	 
-	
+	Log::instance()->add(Log::NOTICE, "57 socket". Debug::vars($this->socket));
+		
 	if (false === $this->socket) { 
 			Log::instance()->add(Log::NOTICE, "44 Couldn't create socket, error code is: " . iconv('windows-1251','UTF-8',socket_last_error()) . ",error message is: " . iconv('windows-1251','UTF-8', socket_strerror(socket_last_error())));
 			$this->result='err';
@@ -66,11 +97,9 @@ class phpMPTtcp
 				
 			//	Log::instance()->add(Log::NOTICE, "48 Socket создан успешно"); 	
 			};
-		
-	
-		// создаем соединение 
+			// создаем соединение 
 		$this->connection = @socket_connect($this->socket, $this->address, $this->port);
-		
+		Log::instance()->add(Log::NOTICE, "69 check. Время выполнения  ".(microtime(true) - $t1));
 		if ($this->connection === false)      
 		{
 			Log::instance()->add(Log::NOTICE, "55 Cannot connect to device ".$this->address.":". $this->port);
@@ -81,8 +110,6 @@ class phpMPTtcp
 			//Log::instance()->add(Log::NOTICE, "60 OK connect to server".$this->address.":". $this->port);
 
 		}
-   
-
         return true;
     }
 
@@ -223,9 +250,7 @@ class phpMPTtcp
 	
 	public function execute()// выполнение команды $this->command  
 	{
-	
-		
-		if($this->connect())
+		if($this->connect())//подключаюсь к сокету
 		{
 		$_command=$this->make_binary_command($this->command);
 		$_answer=$this->sendCommand($_command);
@@ -336,7 +361,7 @@ class phpMPTtcp
    public function openGate($mode)// открытие ворот с учетом режима работы
 	{
 		//echo Debug::vars('241', $mode ); exit;
-		
+		$t1=microtime(true);
 		Log::instance()->add(Log::NOTICE, "326 mode number ". $mode); 
 		//$mode=1;
 		if($mode ==0)//открываю дверь 0
@@ -379,7 +404,7 @@ class phpMPTtcp
 			$this->execute();
 
 		}
-		
+		Log::instance()->add(Log::NOTICE, "380 завершил выполнение функции openGate. Время выполнения  ".(microtime(true) - $t1));
 			
 		return $this;
 	}

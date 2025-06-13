@@ -233,7 +233,7 @@ class Controller_Dashboard extends Controller{
 		
 		
 		// ПРОВЕРКА: МОЖНО ЛИ ВЪЕЗЖАТЬ???
-		//$cvs->check(); 
+		$cvs->check(); 
 		$cvs->validation(); 
 
 		Log::instance()->add(Log::NOTICE, '154 '. Debug::vars($cvs));
@@ -596,7 +596,7 @@ class Controller_Dashboard extends Controller{
 		$cvs_event_id=Arr::get($input_data, 'id');//передал в модель номер события
 		
 		// вызов процесса валидации. Результат валидации сохраняется в $cvs как значения параметров
-		//$cvs->check(); 
+		$cvs->check(); 
 		$cvs->validation(); 
 		//echo Debug::vars('176', $cvs);exit;
 		
