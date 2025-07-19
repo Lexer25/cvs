@@ -146,45 +146,6 @@ class phpCVS
 	
 	
 	
-/** 3.05.2025
-*Процесс валидации ГРЗ и UHF в указанной точке проезда средствами php (не процедура в БД СКУД).
-*@param id_parking - id парковочной площадки
-*@param is_enter - true - въезд, false - выезд
-*@param GRZ - номерной знак
-*@return void
-*/
-
- public function checkPHPin()
-    {
-		
-		//валидация card. если неуспешно, то сразу отказ в проезде (RC=46)
-		//если выезд, то праверить только разрешение на выезд и:
-			//разрешить выезд
-			//удалить card из таблицы inside
-		//если въезд, то проверить наличие свободных мест:
-			//подсчет количества машиномест в гараже для этого card
-			//подсчет уже занятых мест в этом гараже.
-			//сравнение.
-			//если места есть, то:
-				//разрешить въезд
-				//отметить card в таблице inside
-		
-		$sql='select rc as event_type, id_pep from REGISTERPASS_HL_2('.$this->id_dev.', \''.$this->grz.'\', NULL)';
-		//$sql='select event_type, id_pep from VALIDATEPASS_HL_PARKING('.$this->id_dev.', \''.$this->grz.'\', NULL)';
-		echo Debug::vars('83', $sql);exit;
-		$query = DB::query(Database::SELECT, $sql)
-			->execute(Database::instance('fb'))
-			->as_array();
-		
-		$query=Arr::get($query, 0);
-		$this->getMessForEvent(Arr::get($query, 'EVENT_TYPE'));
-		//$this->getMessForIdle();
-		$this->code_validation = Arr::get($query, 'EVENT_TYPE');
-		return;
-    }
-	
-	
-	
 	
 	
  public function getMessForEvent($id_event)
@@ -240,41 +201,146 @@ public function getMessForIdle()
 	 return;
  }
  
- /*
- установка семафора для синхронизации работы систем.
- $semaforName - имя семаформа
-$data - содержимое семафора
- 
- */
-/* public function setSemafor($semaforName, $data)
- {
-		$fp = fopen($semaforName, "w"); // Открываем файл в режиме записи	
-		$test = fwrite($fp, $data); // Запись в файл
-		fclose($fp); //Закрытие файла
+/** 19.07.2025
+	*Процесс валидации ГРЗ и UHF в указанной точке проезда средствами php (не процедура в БД СКУД).
+	*@param id_parking - id парковочной площадки
+	*@param is_enter - true - въезд, false - выезд
+	*@param GRZ - номерной знак
+	*@return void
+	*/
+
+	public function checkPHPin()
+    {
 		
-	 return;
- }
-  */
- 
-
- /*
- прочитать семафора для синхронизации работы систем.
- $semaforName - имя семаформа
-$data - содержимое семафора
- 
- */
-/* public function getSemafor($semaforName)
- {
-		$handle = fopen($semaforName, "r");
-		$contents = fread($handle, filesize($semaforName));
-		fclose($handle);
+		$event=new Events();
+		$event->eventCode=13;
+		$event->grz=$grz;
+		$event->addEventRow();
 		
-	 return $contents;
- }
-  */
- 
+		//собираю информацию по полученному идентификатору
+		$identifier=new Identifier($grz);
+		switch($identifier->status){
+			case 'UNKNOWNCARD':
+				//запись в БД что карта неизвестна, завершение работы
+				echo Debug::vars('85 UNKNOWNCARD');
+				$event->eventCode=events::UNKNOWNCARD;
+				$event->grz=$grz;
+				$event->addEventRow();
+				exit;
+			break;
+			case	 'DISABLEDCARD':
+				//запись в БД что карта DISABLEDCARD
+				exit;
+			break;
+			case	 'DISABLEDUSER':
+				//запись в БД что карта DISABLEDUSER
+				exit;
+			break;
+			case	 'CARDEXPIRED':
+				//запись в БД что карта DISABLEDUSER
+				exit;
+			break;
+			default:
+				//идентификатор валидный, продолжаем работу
+			break;
+		}
+			echo Debug::vars('94 информация о ГРЗ', $identifier);//exit;
+			
+			//надо иметь информацию и о воротах, откуда пришел ГРЗ
+			//Эта часть реализована в phpCVS
+			$cvs=new phpCVS(Model_cvss::getGateFromCam($id_cam));
+			echo Debug::vars('106 информация о воротах', $cvs);
+			
+			//надо иметь информацию о гараже.
+			$garage=new Garage($identifier->id_garage);//это - модель гаража, куда едет ГРЗ. Этот параметр беретс из $identifier->id_garage, но для отладки использую фиксировнное значение  $id_garage
+			echo Debug::vars('109 ГРЗ едет вот в этот гараж', $garage);
+		
+		
 
+		//если у ГРЗ есть гараж, то надо делать только проверки свободных мест.
+		//если же гаража нет, то надо проверять категорию доступа.		
+		if(is_null($identifier->id_garage)) //гаража нет.
+		{
+			
+			echo Debug::vars('103 гаража нет. проезд только при наличии категории доступа.');
+			exit;
 
-
+		}	
+			//если гараж есть, то:
+			
+	//может ли ГРЗ ездить через эти ворота?
+		//для этого необходимы условия:
+		//1. гараж и ворота находятся на одной площадке. для этого надо знать
+		//общего у них -  парковочная площадка id_parking
+		//echo Debug::vars('132', in_array ($cvs->id_parking, $garage->id_parking));exit; 
+		if(!in_array ($cvs->id_parking, $garage->id_parking)){
+			//ворота, куда подъехал автомобиль, не содержит парковочных мест гаража, разрешенных этому ГРЗ.
+			//ворота не открывать!. можно вывести подсказку: ошиблись воротами!
+			$event->eventCode=events::ACCESSDENIED;
+			$event->grz=$grz;
+			$event->addEventRow();
+			
+			echo Debug::vars('134 ошибся воротами!');
+			exit;
+		}
+		echo Debug::vars('137 в эти ворота можно проезжать!');
+		 //это въезд или выезд?
+	
+	
+	//Проверяю направление проезда.
+	if($cvs->isEnter ){
+	//проверяю наличие свободных мест	 
+	//т.к. гараж может иметь на разых площадках, то и количество свободных мест надо считать для каждой площадки.
+			//echo Debug::vars('142',$garage->getPlaceCount($cvs->id_parking));
+			//echo Debug::vars('143',$garage->getPlaceCountUccuped($cvs->id_parking));
+			
+ 		 if($garage->getPlaceCount($cvs->id_parking) - $garage->getPlaceCountUccuped($cvs->id_parking) >0){
+			//свободные мест есть, можно запускать.
+		//*добавить событие  в hl_events
+		
+		$event->eventCode=events::OK;
+		$event->grz=$grz;
+		$event->addEventRow();
+		//*добавить в hl_inside номер id_pep и дату. Номер ГРЗ идет как вспомогательный параметр, чтобы можно было понять по какому ГРЗ был въезд. 
+		//*давать команду на управление воротами: открыть, вывести надпись и т.п.
+			 echo Debug::vars('116 Можно заезжать!');
+		 } else {
+			 //мест нет, не запускать.
+		//*добавить событие  в hl_events
+		//*дать команду на ворота: что вывести табло.
+			 echo Debug::vars('121 Мест нет');
+		 } 
+		//проверяю наличие свободных мест.
+		//теперь по номеру видекамеры определяю параметры гаража, куда пытается заехать автомобиль.	
+		
+	} else { //выезд
+	$event->eventCode=events::OK;
+		$event->grz=$grz;
+		$event->addEventRow();
+		echo Debug::vars('165 выезд!!!');
+		// есть ли ГРЗ и id_pep в таблице hl_inside?
+		//если есть, то удалить оттуда.
+		//а если нет, то удалить кого-нибудь другого...
+		if($identifier->checkInParking($cvs->id_parking))
+		{
+	//* удалить идентификатор из таблицы hl_inside
+	//*	сделать запись в журнале событий
+	//* открыть ворота
+	echo Debug::vars('174 Был на территории, можно выезжать!');
+		} else {
+			//* надо хоть кого-то удалить
+			//* сделать запись в журнале событий о нарушении порядка
+			//* сделать запись в журнале событий о выезде
+			//*открыть ворота
+			echo Debug::vars('180 на территории не был, пытается выехать. что делать?');
+		}
+		
+		
+	}
+		
+    }
+	
+	
+	
    
 }

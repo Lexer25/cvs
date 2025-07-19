@@ -1,25 +1,23 @@
 <?php
 
 /*
-класс Gate описывает свойств и методы работы ворот, используемые в парковочной системе
-Ворота - это шлагбаум, привод и т.п., чем надо каким-то образом управлять.
+класс Garage описывает свойств и методы гаража: количество мест, количество занятых мест.
+Метод:
+- добавить грз
+- удалить ГРЗ
 */
-class Gate
+class Garage
 {
-    public $id;        //id ворот
-   	public $box_ip;		/* IP адрес шкафа (контроллера) управления*/
-	public $box_port;	/* порт шкафа управления*/
-	public $id_gate;		/* номер ворот*/
-	public $id_dev;		/* id_dev, обслуживающий эти ворота*/
-	public $mode;		/* режим работы ворот*/
-	public $id_parking;	/* id паркинга */
-	public $isEnter;	/* 0 для выезда, 1 для въезда */
-	
-
+    public $id;        //id гаража
+    public $placeCount;//количество машиномест в гараже
+    public $placeCountUccuped;//количество занятых машиномест
+    public $id_parking=array();//количество занятых машиномест
+   
+   
   
-    public function __construct($id_gate)// id_gate - номер ворот
+    public function __construct($id)// id_gate - номер ворот
     {
-       $sql='select hlp.tablo_ip, 
+      /*  $sql='select hlp.tablo_ip, 
 					hlp.tablo_port,
 					hlp.box_ip,
 					hlp.box_port,
@@ -33,36 +31,59 @@ class Gate
 					
 	   $query = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
-			->as_array();
+			->as_array(); */
 			
-			$query=Arr::get($query, 0);
-					$this->tablo_ip=Arr::get($query, 'TABLO_IP'); 
-					$this->tablo_port=Arr::get($query, 'TABLO_PORT');
-					$this->box_ip=Arr::get($query, 'BOX_IP');
-					$this->box_port=Arr::get($query, 'BOX_PORT');
-					$this->id_gate=Arr::get($query, 'ID_GATE');
-					$this->id_dev=Arr::get($query, 'ID_DEV');
-					$this->mode=Arr::get($query, 'MODE');
-					$this->id_parking=Arr::get($query, 'ID_PARKING');
-					$this->isEnter=Arr::get($query, 'IS_ENTER');
-					$this->cam=$cam;
-					
-			$this->getMessForIdle();
+					$this->id=$id; 
+					$this->placeCount=3; 
+					$this->placeCountUccuped=2; 
+					$this->id_parking=array(2,3,4);
+
 			return;
 			
     }
 
 
-   public function getIDPEP($id_pep1)
+	public function getPlaceCount($id_place)//подсчет общего количества мест на указанной площадке для текущего гаража
     {
        
-		$sql='select count(*) from people';
+		$sql='select count(hlp.id) from hl_place hlp
+			join hl_garage hlg on hlg.id_place=hlp.id
+			where hlg.id_garagename='.$this->id.'
+			and hlp.id_parking='.$id_place;
+		//	echo Debug::vars('53', $sql);exit;
 		$query = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->get('COUNT');
-	   $this->id_pep = $query;
-		return;
+
+		return $query;
     }
+	
+	
+	
+public function getPlaceCountUccuped($id_place)//подсчет количества занятых мест на указанной площадке для текущего гаража
+    {
+       
+		$sql='select count(hlp.id) from hl_place hlp
+			join hl_garage hlg on hlg.id_place=hlp.id
+			where hlg.id_garagename='.$this->id.'
+			and hlp.id_parking='.$id_place;
+			
+			
+		$sql='select count(hli.id_pep) from hl_inside hli
+				join people p on p.id_pep=hli.id_pep
+				join hl_orgaccess hlo on hlo.id_org=p.id_org
+				where hli.counterid='.$id_place.'
+				and hlo.id_garage='.$this->id;	
+		//	echo Debug::vars('53', $sql);exit;
+		$query = DB::query(Database::SELECT, $sql)
+			->execute(Database::instance('fb'))
+			->get('COUNT');
+
+		return $query;
+    }
+	
+	
+	
 
 
  public function check()
@@ -70,7 +91,7 @@ class Gate
        
 		$sql='select rc as event_type, id_pep from REGISTERPASS_HL_2('.$this->id_dev.', \''.$this->grz.'\', NULL)';
 		//$sql='select event_type, id_pep from VALIDATEPASS_HL_PARKING('.$this->id_dev.', \''.$this->grz.'\', NULL)';
-		echo Debug::vars('73', $sql);exit;
+		echo Debug::vars('94', $sql);exit;
 		$query = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->as_array();

@@ -27,25 +27,8 @@ where hlp.box_ip=\''.$ip.'\'';
 			->execute(Database::instance('fb'))
 			->get('BOX_IP') >0);
 	}
-	
-	
-	/**Проверка: как давно были получены данные?
-	* если данные полечены в течении менее чем указанное времы, то вернется false
-	*@param $data номер видеокамеры
-	*/
-	public static function checkTimeout($data) // 
-	{
-			$timeout=60*60*24;
-			$cache = Cache::instance('file');
-			 
-			$cache->set($data, $timeout); // Кэшируем на 2 часа
-			return true;
-	}
-	
-	
-	
-	
-	
+
+		
 	/**Получить id ворот по номеру видеокамеры
 	*@param $cam номер видеокамеры
 	*/
@@ -87,6 +70,7 @@ where hlp.box_ip=\''.$ip.'\'';
 	{
 		return true;
 	}
+	
 	
 	
 	

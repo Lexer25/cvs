@@ -68,6 +68,20 @@ class Controller_Dashboard extends Controller{
 		$mess.=HTML::anchor('guide', 'guide');
 		$this->response->body($mess);
 		
+		//получил номер идентфикатора. Проверяю: надо ли с ним вообще работать?
+		//Входные данные:
+		$grz='1922384';
+		$id_cam=3;//3.2 выезд
+	//$id_cam=1;//3.2 въезд
+		$gate=Model_cvss::getGateFromCam($id_cam);//это ворота, через которые пытается проехат ГРЗ
+		
+		echo __('77 ГРЗ :grz проезд в камеру :cam, ворота :gate', array(':grz'=>$grz, ':cam'=>$id_cam, ':gate'=>$gate));
+		
+		
+		
+		// вызов процесса валидации. Результат валидации сохраняется в $cvs как значения параметров
+		//$cvs->check(); 
+		
 		
 		$content = View::factory('dashboard', array(
 			//'garageLst'=>$garageLst,
@@ -110,7 +124,6 @@ class Controller_Dashboard extends Controller{
 					->rule('ip', 'not_empty')//IP контроллера должен быть
 					->rule('ip', 'ip')
 					->rule('ip', 'Model_cvss::checkIpIsPresent') 
-					//->rule('ip', 'Model_cvss::checkTimeout') 
 					->rule('key', 'not_empty')//значение ГРЗ
 					->rule('key', 'regex', array(':value', '/^[ABCDEF\d]{3,8}+$/')) // https://regex101.com/ строк буквы АНГЛ алфавита
 					
@@ -456,12 +469,7 @@ class Controller_Dashboard extends Controller{
 		Log::instance()->add(Log::NOTICE, "\r\n 425 start CVS action_exec");
 		
 		
-		// if(!$_POST){
-			
-			// Log::instance()->add(Log::NOTICE, '430 нет данных в массиве POST, завершаю работу '. Debug::vars($_POST));
-			// return;
-		// }
-
+		
 		//$input_data_0=$_POST;//извлекаю данных из полученного пакета
 		$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
 			
@@ -493,32 +501,9 @@ class Controller_Dashboard extends Controller{
 			return;
 		}
 		
-		//Этап проверка номера события: не повторяется ли? ================================================
-		//"Разборки с повтором номер событий от cvs. было так, что cvs два раза присылал один и тот же номер.
-		
-		//валидация данных прошла успешно, продолжаю обработку
-		//echo Debug::vars('129 Валидация данных ГРЗ данных прошла успешно'); //exit;
-		//$last_event=Model::factory('mpt')->getSemafor('lastevent');//номер последнего обработанного события. Номер взят из файла временного.
-	
-		//Log::instance()->add(Log::NOTICE, '221 last_event '. $last_event);//вывод номера в лог-файл
-		
-		//if($last_event - Arr::get($input_data, 'id') > 1) Log::instance()->add(Log::NOTICE, '78 Потеряны соыбтия с old по new.', array('old'=>$last_event, 'new'=>Arr::get($input_data, 'id') ));
-	/* 	Log::instance()->add(Log::NOTICE, "001 Start cvs id_event=".Arr::get($input_data, 'id').',
-					grz '.Arr::get($input_data, 'plate').',
-					camera '.Arr::get($input_data, 'camera').',
-					timestamp '.microtime(true).',
-					time_from_start='.number_format((microtime(1) - $t1), 3)); */
-		
-			
-				
-		//сохраняю номер полученного пакета от CVS
-		
-		//echo Debug::vars('150');exit;
-		
-		Model::factory('mpt')->setSemafor('lastevent', Arr::get($input_data, 'id'));//сохранил последний номер обрабатываемого события
-		
+	//====================			
 		$id_gate = Model::factory('mpt')->getIdGateFromCam(Arr::get($input_data, 'camera'));//получил номер ворот
-		
+
 		//Log::instance()->add(Log::NOTICE, '133 получил id_gate = :id_gate по номеру камеры=:cam.', array(':id_gate'=>$id_gate, ':cam'=>Arr::get($input_data, 'camera')));
 	
 				
@@ -533,7 +518,8 @@ class Controller_Dashboard extends Controller{
 		$cvs_event_id=Arr::get($input_data, 'id');//передал в модель номер события
 		
 		// вызов процесса валидации. Результат валидации сохраняется в $cvs как значения параметров
-		$cvs->check(); 
+		//$cvs->check(); 
+		$cvs->checkPHPin(); 
 		//echo Debug::vars('176', $cvs);exit;
 		
 		//Log::instance()->add(Log::NOTICE, '117 '. Debug::vars($cvs));
@@ -589,8 +575,5 @@ class Controller_Dashboard extends Controller{
 	}
 
 
-	public function after()
-	{
-		
-	}
+
 }
