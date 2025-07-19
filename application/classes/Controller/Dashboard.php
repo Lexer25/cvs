@@ -16,6 +16,7 @@ class Controller_Dashboard extends Controller{
 //class Controller_Dashboard extends Controller_Template {
 
    public $template = 'template';
+   public $permission = false;
    //K631TX199
    //H497HB150
    
@@ -79,10 +80,6 @@ class Controller_Dashboard extends Controller{
 		
 		
 		
-		// вызов процесса валидации. Результат валидации сохраняется в $cvs как значения параметров
-		//$cvs->check(); 
-		
-		
 		$content = View::factory('dashboard', array(
 			//'garageLst'=>$garageLst,
 				
@@ -90,11 +87,66 @@ class Controller_Dashboard extends Controller{
         //$this->template->content = $content;
 		
 	
-	}
+		}
+		
 	
 
 	
 	public function action_sendMPT()
+	{
+		Log::instance()->add(Log::NOTICE, "\r\n 88 start UHF action_sendMPT");
+		$t1=microtime(1);
+		
+		//фиксирую полученные данные из $_OST в лог-файл
+		//Log::instance()->add(Log::NOTICE, '85 data receive MPT '.Debug::vars($_POST));// exit;
+		$input_data_0=$_POST;//извлекаю данных из полученного пакета
+		
+		if(!Arr::get($input_data_0, 'test'))
+		{
+			//если в запросе нет поля test, то беру IP адрес из запроса
+			$input_data_0['ip']=Request::$client_ip;
+		}
+		
+		//	Log::instance()->add(Log::NOTICE, '130 data send MPT '.Debug::vars($input_data_0)); //exit;
+		
+		$input_data = $input_data_0;
+		
+		
+		//Log::instance()->add(Log::NOTICE, '81 Получил данные UHF '. Debug::vars($input_data));
+		$post=Validation::factory($input_data);
+		$post->rule('ch', 'not_empty')//номер канала должен быть 
+					->rule('ch', 'digit')
+					->rule('ip', 'not_empty')//IP контроллера должен быть
+					->rule('ip', 'ip')
+					->rule('ip', 'Model_cvss::checkIpIsPresent') 
+					->rule('key', 'not_empty')//значение ГРЗ
+					->rule('key', 'regex', array(':value', '/^[ABCDEF\d]{3,8}+$/')) // https://regex101.com/ строк буквы АНГЛ алфавита
+					
+					;
+				
+		if(!$post->check())
+		{
+			
+			Log::instance()->add(Log::NOTICE, '95 Входные данные UHF не полные '. Debug::vars($post->errors()));//вывод номера в лог-файл
+			Log::instance()->add(Log::NOTICE, '131 Обработку UHF прекращаю.');//вывод номера в лог-файл
+			$this->response->status(400);
+			return;
+		}
+		Log::instance()->add(Log::NOTICE, '140 Валидация UHF выполнена успешно, продолжаю работу.');//вывод номера в лог-файл
+		
+		Log::instance()->add(Log::NOTICE, '487 Начинаю анализ ГРЗ.');
+		$id_gate=Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip'), Arr::get($post, 'ch'));
+		
+		$result=$this->mainAnalysis(hexdec(Arr::get($post, 'key')), $id_gate);
+		echo Debug::vars('488', $$result);
+		exit;
+		
+		
+	}
+	
+	
+	
+	public function action_sendMPT_old()
 	{	
 		//25.05.2025 совмещаю обработку реальных запросов и тестовых. Это сделано для того, чтобы можно было тестировать систему
 		//не используя свойство $this->ip_is_test
@@ -458,12 +510,45 @@ class Controller_Dashboard extends Controller{
 	}
 	
 	
+	public function action_exec()
+	{
+		$t1=microtime(1);
+		Log::instance()->add(Log::NOTICE, "\r\n 425 start CVS action_exec");
+		$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
+			
+		$input_data=Arr::get($input_data_0, 'plate');
+		
+		//Валидация данных: все ли правильно?
+		$post=Validation::factory($input_data);
+		$post->rule('id', 'not_empty')//номер события
+					->rule('id', 'digit')
+					->rule('id', 'Model_cvss::isEventUniq') //событие уникальное, не совпадает с ранее обработанным
+					->rule('camera', 'not_empty')//номер видеокамеры
+					->rule('camera', 'digit')
+					->rule('camera', 'Model_cvss::checkCamIsPresent') 
+					->rule('plate', 'not_empty')//значение ГРЗ
+					->rule('plate', 'regex', array(':value', '/^[A-Za-z\d]{3,10}+$/')) // https://regex101.com/ строго буквы АНГЛ алфавита
+					
+					;
+		if(!$post->check())
+		{
+			
+			Log::instance()->add(Log::NOTICE, '125 Входные данные cvs не полные '. Debug::vars($post->errors())); //exit;//вывод номера в лог-файл
+			//echo Debug::vars('126 валидация прошла с ошибкой', $post->errors());exit;
+			$this->response->status(200);
+			exit;
+		}
+		Log::instance()->add(Log::NOTICE, '487 Начинаю анализ ГРЗ.');
+		echo Debug::vars('488', $this->mainAnalysis());exit;
+	}
+	
+	
 	//29.04.2025 прием сообщений от системы распознавания CVS
 	//и их последующая обработка
 	//особенность: данные от cvs передаются в массиве POST в виде двумерного массива
 	// "messageId" => <small>string</small><span>(36)</span> "dd03e3d2-ac2d-485a-8c5e-95c5d6ec869c"
     //"plate" => <small>array</small><span>(16)</span> <span>(
-	public function action_exec()
+	public function action_exec_old()
 	{	
 		$t1=microtime(1);
 		Log::instance()->add(Log::NOTICE, "\r\n 425 start CVS action_exec");
@@ -500,6 +585,8 @@ class Controller_Dashboard extends Controller{
 			$this->response->status(200);
 			return;
 		}
+	
+		
 		
 	//====================			
 		$id_gate = Model::factory('mpt')->getIdGateFromCam(Arr::get($input_data, 'camera'));//получил номер ворот
@@ -574,6 +661,118 @@ class Controller_Dashboard extends Controller{
 		return;
 	}
 
+
+	//основной алгоритм анализа входных данных
+	public function mainAnalysis($grz, $id_gate)
+	{
+		Log::instance()->add(Log::NOTICE, '614 Начал работу анализатора для key='.$grz);
+		//начинаю анализ
+		//начинаю проверку полученного идентификатора.
+		$identifier=new Identifier($grz);
+		//Log::instance()->add(Log::NOTICE, '672 Identifier'. Debug::vars($identifier));
+		if(!$identifier->status==Identifier::VALID){
+			//зафиксировать в журнале отказ от дальнейшей обработки
+			Log::instance()->add(Log::NOTICE, '675 карта :key не валидна status=:status. Завершаю обработку.',
+				array(
+					':key'=>$grz,
+					':status'=>$identifier->status
+					));
+			
+			exit;
+		} 
+		Log::instance()->add(Log::NOTICE, '683 карта :key валидна status=:status. Продолжаю обработку.',
+				array(
+					':key'=>$grz,
+					':status'=>$identifier->status
+					));
+		//Теперь надо собрать данные для дальнейшего анализа
+		
+		//надо иметь информацию и о воротах, откуда пришел ГРЗ
+			//Эта часть реализована в phpCVS
+			$cvs=new phpCVS($id_gate);
+			//echo Debug::vars('106 информация о воротах', $cvs);
+			
+			//надо иметь информацию о гараже.
+			$garage=new Garage($identifier->id_garage);//это - модель гаража, куда едет ГРЗ. Этот параметр беретс из $identifier->id_garage, но для отладки использую фиксировнное значение  $id_garage
+			//echo Debug::vars('109 ГРЗ едет вот в этот гараж', $garage);
+		
+		
+		//если у ГРЗ есть гараж, то надо делать только проверки свободных мест.
+		//если же гаража нет, то надо проверять категорию доступа.		
+		if(is_null($identifier->id_garage)) //гаража нет.
+		{
+			
+			//echo Debug::vars('103 гаража нет. проезд только при наличии категории доступа.');
+			
+			Log::instance()->add(Log::NOTICE, '706 карта :key гаража не имеет.',
+				array(
+					':key'=>$grz,
+					':status'=>$identifier->status
+					));
+			//тут надо вызвать метод анализа без гаража, только по категории доступа.
+			//результат анализа - можно или нельзя!
+			exit;
+
+		} 
+		
+		Log::instance()->add(Log::NOTICE, '718 карта :key имеет гараж :garage.',
+				array(
+					':key'=>$grz,
+					':garage'=>$identifier->id_garage
+					));
+			//тут надо вызвать метод анализа при наличии гаража.
+			//результат анализа:
+			//-въезд разрешен (т.е. места есть).
+			//въезд запрещен (т.е. мест нет)
+			//Log::instance()->add(Log::NOTICE, '727 garage'. Debug::vars($garage));
+			if(!$cvs->checkAccess($garage->id_parking)){ //тут $garage->id_parking - список парковок, на которых расположены машиноместа гаража
+				//ворота, куда подъехал автомобиль, не содержит парковочных мест гаража, разрешенных этому ГРЗ.
+				//въезд запрещен
+				Log::instance()->add(Log::NOTICE, '731 карта :key подъехала к чужим воротам.',
+				array(
+					':key'=>$grz,
+					':status'=>$identifier->status
+					));
+				
+				// $event->eventCode=events::ACCESSDENIED;
+				// $event->grz=$grz;
+				// $event->addEventRow();
+				
+				echo Debug::vars('134 ошибся воротами!');
+				exit;
+			} 
+				Log::instance()->add(Log::NOTICE, '744 карта :key подъехала к своим воротам.',
+				array(
+					':key'=>$grz,
+					':status'=>$identifier->status
+					));
+				
+				//въезд разрешен, анализирую загрузку гаражей
+				if($cvs->isEnter ) {//если въезд
+					if($cvs->checkPHPin($garage)){
+						
+						//въезд разрешен
+						$permission = true;
+					} else {
+						//въезд запрещен (нет мест)
+						$permission = false;
+					}
+				} else {//если выезд
+					if($cvs->checkPHPout($parkingplace)){
+						
+						//выезд разрешен
+						$permission = true;
+					} else {
+						
+						//выезд запрещен
+						$permission = false;
+					}
+				}
+ 	
+			
+		echo Debug::vars('150 анализ завершен, далее надо делать обработку (открывать или не открывать ворота, выводить надписи на табло)', $permission );exit;
+		exit;
+	}
 
 
 }

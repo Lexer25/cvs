@@ -36,13 +36,37 @@ class Garage
 					$this->id=$id; 
 					$this->placeCount=3; 
 					$this->placeCountUccuped=2; 
-					$this->id_parking=array(2,3,4);
+					$this->id_parking=$this->id_parking();
 
 			return;
 			
     }
 
-
+	
+	/**19.07.2025 подготовка списка парковочных площадей, на которых расположениы машиноместа гаража
+	*
+	*
+	*/
+	public function id_parking()
+	{
+		$sql='select distinct hlp.id_parking from hl_garage hlg
+			join hl_place hlp on hlp.id=hlg.id_place
+			where hlg.id_garagename='.$this->id;
+		$query = DB::query(Database::SELECT, $sql)
+			->execute(Database::instance('fb'))
+			->as_array();
+			
+			$res=array();
+			foreach ($query as $key=>$value)
+			{
+				$res[]=Arr::get($value, 'ID_PARKING');
+				
+			}
+			return $res;
+		
+	}
+	
+	
 	public function getPlaceCount($id_place)//подсчет общего количества мест на указанной площадке для текущего гаража
     {
        
