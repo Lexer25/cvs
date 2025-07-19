@@ -1,0 +1,93 @@
+<?php defined('SYSPATH') OR die('No direct access allowed.');
+/**
+*4.05.2025 Вспомогательные функции для работы парковочной системы
+*/
+class Model_Cvss extends Model {
+	
+	/**Провка: находится ли номер видеокамеры в настройках?
+	*@param $cam номер видеокамеры
+	*/
+	public static function checkCamIsPresent ($cam) // 
+	{
+	$sql='select hlp.id_cam from hl_param hlp
+	where hlp.id_cam='.$cam;
+	return( DB::query(Database::SELECT, $sql)
+			->execute(Database::instance('fb'))
+			->get('ID_CAM') >0);
+	}
+	
+	/**Провка: находится ли полученный IP в настройках?
+	*@param $cam номер видеокамеры
+	*/
+	public static function checkIpIsPresent ($ip) // 
+	{
+	$sql='select distinct hlp.box_ip from hl_param hlp
+where hlp.box_ip=\''.$ip.'\'';
+	return( DB::query(Database::SELECT, $sql)
+			->execute(Database::instance('fb'))
+			->get('BOX_IP') >0);
+	}
+	
+	
+	/**Проверка: как давно были получены данные?
+	* если данные полечены в течении менее чем указанное времы, то вернется false
+	*@param $data номер видеокамеры
+	*/
+	public static function checkTimeout($data) // 
+	{
+			$timeout=60*60*24;
+			$cache = Cache::instance('file');
+			 
+			$cache->set($data, $timeout); // Кэшируем на 2 часа
+			return true;
+	}
+	
+	
+	
+	
+	
+	/**Получить id ворот по номеру видеокамеры
+	*@param $cam номер видеокамеры
+	*/
+	public static function getGateFromCam ($cam) // 
+	{
+	$sql='select hlp.id from hl_param hlp
+	where hlp.id_cam='.$cam;
+	return( DB::query(Database::SELECT, $sql)
+			->execute(Database::instance('fb'))
+			->get('ID'));
+	}
+	
+	
+	/**Получить id ворот по IP адресу контроллера
+	*@param $cam номер видеокамеры
+	*/
+	public static function getGateFromBoxIp ($ip, $port) // 
+	{
+	$sql='select hlp.id from hl_param hlp
+	where hlp.box_ip=\''.$ip.'\'
+	and hlp.channel='.$port;
+	//Log::instance()->add(Log::DEBUG, '54 '.$sql);
+	return( DB::query(Database::SELECT, $sql)
+			->execute(Database::instance('fb'))
+			->get('ID'));
+	}
+	
+	
+	
+	
+	
+	/**Проверка: не повторное ли это событие?
+	* 4.05.2025
+	*cvs иногда присылала повторно событие
+	*@param $id_event номер события
+	*@return bool true - событие уникальное
+	*/
+	public static function isEventUniq ($id_event) // 
+	{
+		return true;
+	}
+	
+	
+	
+}
