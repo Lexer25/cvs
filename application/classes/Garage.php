@@ -66,8 +66,12 @@ class Garage
 		
 	}
 	
-	
-	public function getPlaceCount($id_place)//подсчет общего количества мест на указанной площадке для текущего гаража
+	/**19.07.2025 подсчет общего количества мест на указанной площадке для текущего гаража
+	*это не общее количество машиномест в гараже, а именно на указанной площадке.
+	*
+	*
+	*/
+	public function getPlaceCount($id_place)
     {
        
 		$sql='select count(hlp.id) from hl_place hlp
@@ -75,6 +79,7 @@ class Garage
 			where hlg.id_garagename='.$this->id.'
 			and hlp.id_parking='.$id_place;
 		//	echo Debug::vars('53', $sql);exit;
+		//Log::instance()->add(Log::NOTICE, '78 '.$sql);
 		$query = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->get('COUNT');

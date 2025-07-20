@@ -7,7 +7,7 @@
  */
 class events {
 	
-				public $event_code='null';
+				public $eventCode='null';
 				public $event_time='null';
 				public $is_enter='null';
 				public $rubi_card='null';
@@ -20,6 +20,7 @@ class events {
 				public $created='null';
 				
 				
+				const CARLIMITEXCEEDED=81;
 				const UNKNOWNCARD=46;
 				const DISABLEDCARD=65;
 				const CARDEXPIRED=65;
@@ -30,20 +31,15 @@ class events {
 	public function addEvent()//добавление события в таблицу HL_EVENTS
 	{
 		switch($this->eventCode){
-			case cvsConstant::UNKNOWNCARD:
+			case self::UNKNOWNCARD:
+			case self::DISABLEDCARD:
+			case self::CARDEXPIRED:
+			case self::DISABLEDUSER:
 			$_data=array(
-				'event_code'=>$this->eventCode,
-				'grz='=>'333',
+				'eventCode'=>$this->eventCode,
+				'grz='=>$this->grz,
+				'id_gate='=>$this->id_gate,
 				);
-			break;
-			case cvsConstant::DISABLEDCARD:
-			
-			break;
-			case cvsConstant::CARDEXPIRED:
-			
-			break;
-			case cvsConstant::DISABLEDUSER:
-			
 			break;
 			
 			
@@ -71,13 +67,11 @@ class events {
 				':CREATED'=>$this->created
 			);
 		
-		$sql=__('INSERT INTO HL_EVENTS (EVENT_CODE,EVENT_TIME,IS_ENTER,RUBI_CARD,PARK_CARD,GRZ,COMMENT,PHOTO,ID_PEP,ID_GATE,CREATED)
-			VALUES (:EVENT_CODE,:EVENT_TIME,:IS_ENTER,:RUBI_CARD,:PARK_CARD,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE,:CREATED)', $_data);
-			
 		$sql=__('INSERT INTO HL_EVENTS (EVENT_CODE,IS_ENTER,RUBI_CARD,PARK_CARD,GRZ,COMMENT,PHOTO,ID_PEP,ID_GATE)
 			VALUES (:EVENT_CODE,:IS_ENTER,:RUBI_CARD,:PARK_CARD,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE)', $_data);
 			
 		//echo Debug::vars('78',$_data, $sql);exit;	
+		Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
 		try
 			{
 				$query = DB::query(Database::INSERT, iconv('UTF-8', 'CP1251',$sql))
