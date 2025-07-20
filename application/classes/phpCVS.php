@@ -287,7 +287,7 @@ Log::instance()->add(Log::NOTICE, '245 мест нет :data', array(':data'=>1)
 	public function checkPHPout()
 	{
 
-		return false;
+		return true;
 
 
 	}

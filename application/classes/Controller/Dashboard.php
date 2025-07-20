@@ -111,7 +111,7 @@ class Controller_Dashboard extends Controller{
 		
 		$input_data = $input_data_0;
 		
-		
+		Log::instance()->add(Log::NOTICE, '114 MPT получил данные :data', array(':data'=>Debug::vars($input_data)));
 		//Log::instance()->add(Log::NOTICE, '81 Получил данные UHF '. Debug::vars($input_data));
 		$post=Validation::factory($input_data);
 		$post->rule('ch', 'not_empty')//номер канала должен быть 
@@ -146,7 +146,10 @@ class Controller_Dashboard extends Controller{
 						)); 
 							
 		
-		$result=$this->mainAnalysis(hexdec(Arr::get($post, 'key')), $id_gate);
+		$cvs=new phpCVS($id_gate);
+		$identifier=new Identifier(hexdec(Arr::get($post, 'key')));
+		
+		$result=$this->mainAnalysis($identifier,  $cvs);
 		Log::instance()->add(Log::NOTICE, '152   результат работы mainAnalysis' . $result);
 		
 		
@@ -161,7 +164,7 @@ class Controller_Dashboard extends Controller{
 		
 		if(Arr::get($input_data_0, 'test')) Log::instance()->add(Log::NOTICE, '169 режим ТЕСТ, команды на открытие ворот НЕ передаются'); 
 			
-		$this->gateControl($cvs);
+		$this->gateControl($identifier, $cvs);
 		Log::instance()->add(Log::NOTICE, "172 gateControl total_time=".number_format((microtime(1) - $t2), 3)."\r\n");		
 
 	
@@ -269,7 +272,7 @@ class Controller_Dashboard extends Controller{
 		if(!Arr::get($input_data_0, 'test'))
 		{
 			
-			$this->gateControl($cvs);
+			$this->gateControl($identifier, $cvs);
 		} else {
 			
 			Log::instance()->add(Log::NOTICE, '177 режим ТЕСТ, команды на открытие ворот НЕ передаются'); 
@@ -291,7 +294,7 @@ class Controller_Dashboard extends Controller{
 	*	Процедура управления воротами
 	*
 	*/
-	public function gateControl(phpCVS $cvs)
+	public function gateControl(Identifier $identifier, phpCVS $cvs)
 	{
 		//===============================================================
 		//Этап 3. Проверка на работу в режиме ТЕСТ	
@@ -380,16 +383,17 @@ class Controller_Dashboard extends Controller{
 		 switch($cvs->code_validation){
 		
 		
+			case events::WOK : //повторный проезд разрешен
 			case 50 : //проезда разрешен
 				$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
 				//Log::instance()->add(Log::NOTICE, '307-307  '.Debug::vars($mpt));
-				if(!Arr::get($config, 'testMode')) $mpt->openGate($cvs->mode);// даю команду открыть ворота
+				if(!Arr::get($config, 'debug')) $mpt->openGate($cvs->mode);// даю команду открыть ворота
 			
 				$i=0;
 					while($mpt->result !='OK' AND $i<10)// делать до 10 попыток
 					{
 						Log::instance()->add(Log::DEBUG, '155 Команда открыть ворота '.$cvs->box_ip.':'.$cvs->box_port.' выполнена неудачно: '.$mpt->result.' desc '.$mpt->edesc.'. timestamp '.microtime(true).'. Команда Открыть ворота повторяется еще раз, попытка '.$i.' time_from_start='.number_format((microtime(1) - $t1), 3));
-						if(!Arr::get($config, 'testMode')) $mpt->openGate($cvs->mode);// открыть ворота
+						if(!Arr::get($config, 'debug')) $mpt->openGate($cvs->mode);// открыть ворота
 						$i++;
 					}
 					//Log::instance()->add(Log::NOTICE, '004_150 Событие 50. Результат выполнения команды openGate '.$cvs->box_ip.':'.$cvs->box_port.' result='.$mpt->result.', desc='.$mpt->edesc.'  после '. $i .' попыток time_from_start='.number_format((microtime(1) - $t1), 3));		
@@ -398,24 +402,37 @@ class Controller_Dashboard extends Controller{
 					//Log::instance()->add(Log::NOTICE, '138 Событие 50. Не смог открыть ворота в течении 10 попыток. Видеокамера '.$cvs->cam.' ('.$direct.') ГРЗ '.$cvs->grz.' контролер IP='.$cvs->box_ip.':'.$cvs->box_port.' Режим шлюза '.$cvs->mode.' Ответ '.$mpt->result.' edesc '.$mpt->edesc);		
 				} else 
 				{
-					//Log::instance()->add(Log::NOTICE, '004_64 Событие 50. Ответ контроллера после повторной команды '.$mpt->result.' edesc '.$mpt->edesc.'  после '. $i .' попыток.');		
+					//Log::instance()->add(Log::NOTICE, '004_64 Событие 50. Ответ контроллера после повторной команды '.$mpt->result.' edesc '.$mpt->edesc.'  после '. $i .' попыток.');	
+						//Ворота открылись успешно, надо добавлять ГРЗ в таблицу inside в зависиммочти от направления движения
+						
+						$inside= new insideList;
+						$inside->id_card=$identifier->id;
+						$inside->id_pep=$identifier->id_pep;
+						$inside->id_parking=$cvs->id_parking;;
+						if($cvs->isEnter==1) {// въезд
+							$inside->addToInside();
+						} else {
+							$inside->delFromInside();
+						}
+						 
+						
 				}
 					//теперь занимаюсь выводом информации на табло
 				
 				$tablo->command='clearTablo';
-				if(!Arr::get($config, 'testMode')) $tablo->execute(); 		
+				if(!Arr::get($config, 'debug')) $tablo->execute(); 		
 				//Log::instance()->add(Log::NOTICE, '152 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
 					
 				$tablo->command='text';// вывод ГРЗ на табло
 				$tablo->commandParam=$cvs->grz;
 				$tablo->coordinate="\x00\x00\x02";
-				if(!Arr::get($config, 'testMode')) $tablo->execute();
+				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '158 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
 				
 				$tablo->command='scrolText';// вывод сообщений на табло
 				$tablo->commandParam=$cvs->eventdMess;
 				$tablo->coordinate="\x08\x00\x02\x01";
-				if(!Arr::get($config, 'testMode')) $tablo->execute();
+				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '164 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
 				
 				
@@ -424,21 +441,21 @@ class Controller_Dashboard extends Controller{
 					//для неизвестной карты открывать ворота НЕ надо, поэтому экземпляр МПТ не создается.
 					//работаю только с табло
 				$tablo->command='clearTablo';
-				if(!Arr::get($config, 'testMode')) $tablo->execute(); 	
+				if(!Arr::get($config, 'debug')) $tablo->execute(); 	
 				//Log::instance()->add(Log::NOTICE, '173 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 							
 				
 				$tablo->command='text';// вывод ГРЗ на табло
 				$tablo->commandParam=$cvs->grz;
 				$tablo->coordinate="\x00\x00\x03";
-				if(!Arr::get($config, 'testMode')) $tablo->execute();
+				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '180 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
 				
 				$tablo->command='scrolText';// вывод сообщений на табло
 				$tablo->commandParam=$cvs->eventdMess;
 				$tablo->coordinate="\x08\x00\x03\x01";
-				if(!Arr::get($config, 'testMode')) $tablo->execute();
+				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '187 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
 				
@@ -449,20 +466,20 @@ class Controller_Dashboard extends Controller{
 				//тут же можно сделать проверку: может, имеется разрешение на въезд в другой паркинг?
 					
 				$tablo->command='clearTablo';
-				if(!Arr::get($config, 'testMode')) $tablo->execute(); 		
+				if(!Arr::get($config, 'debug')) $tablo->execute(); 		
 				//Log::instance()->add(Log::NOTICE, '203 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 				
 				$tablo->command='text';// вывод ГРЗ на табло
 				$tablo->commandParam=$cvs->grz;
 				$tablo->coordinate="\x00\x00\x04";
-				if(!Arr::get($config, 'testMode')) $tablo->execute();
+				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '203 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
 				
 				$tablo->command='scrolText';// вывод сообщений на табло
 				$tablo->commandParam=$cvs->eventdMess;
 				$tablo->coordinate="\x08\x00\x04\x01";
-				if(!Arr::get($config, 'testMode')) $tablo->execute();
+				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '216 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
 				
@@ -475,21 +492,21 @@ class Controller_Dashboard extends Controller{
 				//тут же можно сделать проверку свободных мест на другой парковке	
 					
 				$tablo->command='clearTablo';
-				if(!Arr::get($config, 'testMode')) $tablo->execute(); 	
+				if(!Arr::get($config, 'debug')) $tablo->execute(); 	
 				//Log::instance()->add(Log::NOTICE, '232 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 					
 				
 				$tablo->command='text';// вывод ГРЗ на табло
 				$tablo->commandParam=$cvs->grz;
 				$tablo->coordinate="\x00\x00\x06";
-				if(!Arr::get($config, 'testMode')) $tablo->execute();
+				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '239 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
 				
 				$tablo->command='scrolText';// вывод сообщений на табло
 				$tablo->commandParam=$cvs->eventdMess;
 				$tablo->coordinate="\x08\x00\x06\x01";
-				if(!Arr::get($config, 'testMode')) $tablo->execute();
+				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '246 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
 				
@@ -714,18 +731,20 @@ class Controller_Dashboard extends Controller{
 	*/
 	//
 	
-	public function mainAnalysis($grz, $id_gate)
+	public function mainAnalysis(Identifier $identifier, phpCVS $cvs)
 	{
-		Log::instance()->add(Log::NOTICE, '614 Начал работу анализатора для key='.$grz);
+		// Log::instance()->add(Log::NOTICE, '729 :data', array(':data'=>Debug::vars($identifier)));
+		// Log::instance()->add(Log::NOTICE, '730 :data', array(':data'=>Debug::vars($cvs)));
+		Log::instance()->add(Log::NOTICE, '614 Начал работу анализатора для key='.$identifier->id);
 		//начинаю анализ
-		//начинаю проверку полученного идентификатора.
-		$identifier=new Identifier($grz);
+		//начинаю проверку полученного идентификатора. grz
+		//$identifier=new Identifier($grz);
 		//Log::instance()->add(Log::NOTICE, '672 Identifier'. Debug::vars($identifier));
 		if(!$identifier->status==Identifier::VALID){
 			//зафиксировать в журнале отказ от дальнейшей обработки
 			Log::instance()->add(Log::NOTICE, '675 карта :key не валидна status=:status. Завершаю обработку.',
 				array(
-					':key'=>$grz,
+					':key'=>$identifier->id,
 					':status'=>$identifier->status
 					));
 			return Events::UNKNOWNCARD;
@@ -733,14 +752,14 @@ class Controller_Dashboard extends Controller{
 		} 
 		Log::instance()->add(Log::NOTICE, '683 карта :key валидна status=:status. Продолжаю обработку.',
 				array(
-					':key'=>$grz,
+					':key'=>$identifier->id,
 					':status'=>$identifier->status
 					));
 		//Теперь надо собрать данные для дальнейшего анализа
 		
 		//надо иметь информацию и о воротах, откуда пришел ГРЗ
 			//Эта часть реализована в phpCVS
-			$cvs=new phpCVS($id_gate);
+			//$cvs=new phpCVS($id_gate);
 			//echo Debug::vars('106 информация о воротах', $cvs);
 			
 			//надо иметь информацию о гараже.
@@ -754,7 +773,7 @@ class Controller_Dashboard extends Controller{
 		{
 			Log::instance()->add(Log::NOTICE, '706 карта :key гаража не имеет.',
 				array(
-					':key'=>$grz,
+					':key'=>$identifier->id,
 					':status'=>$identifier->status
 					));
 			//тут надо вызвать метод анализа без гаража, только по категории доступа.
@@ -764,7 +783,7 @@ class Controller_Dashboard extends Controller{
 		} 
 		Log::instance()->add(Log::NOTICE, '718 карта :key имеет гараж :garage.',
 				array(
-					':key'=>$grz,
+					':key'=>$identifier->id,
 					':garage'=>$identifier->id_garage
 					));
 			//тут надо вызвать метод анализа при наличии гаража.
@@ -777,7 +796,7 @@ class Controller_Dashboard extends Controller{
 				//въезд запрещен
 				Log::instance()->add(Log::NOTICE, '731 карта :key подъехала к чужим воротам.',
 				array(
-					':key'=>$grz,
+					':key'=>$identifier->id,
 					':status'=>$identifier->status
 					));
 				
@@ -790,13 +809,21 @@ class Controller_Dashboard extends Controller{
 			} 
 				Log::instance()->add(Log::NOTICE, '744 карта :key подъехала к своим воротам.',
 				array(
-					':key'=>$grz,
+					':key'=>$identifier->id,
 					':status'=>$identifier->status
 					));
 				
 				//въезд разрешен, анализирую загрузку гаражей
 				if($cvs->isEnter ) {//если въезд
-					if($cvs->checkPHPin($garage)){
+				
+				if(insideList::checkGrzInParking($identifier->id)) //он уже на парковке
+				{
+					return Events::WOK;	//повторный въезд
+					
+				}
+				
+				
+					if($cvs->checkPHPin($garage)){//если в гараже есть места или именно этот ГРЗ уже стоит в гараже
 						
 						//въезд разрешен
 						$permission = true;
@@ -807,7 +834,7 @@ class Controller_Dashboard extends Controller{
 						return Events::CARLIMITEXCEEDED;	
 					}
 				} else {//если выезд
-					if($cvs->checkPHPout($parkingplace)){
+					if($cvs->checkPHPout($garage)){
 						
 						//выезд разрешен
 						$permission = true;

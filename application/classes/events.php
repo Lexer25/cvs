@@ -26,6 +26,7 @@ class events {
 				const CARDEXPIRED=65;
 				const DISABLEDUSER=65;
 				const ACCESSDENIED=65;
+				const WOK=6;//двойной въезд
 				const OK=50;
 	
 	public function addEvent()//добавление события в таблицу HL_EVENTS
