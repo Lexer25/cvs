@@ -1,14 +1,13 @@
 <?php
 
-/**20.07.2025 
-* 
+/**20.07.2025 Класс, предоставляющий технические параметры ворот (gate): адреса и порты контроллера ворот, табло, связанные с воротами надписи и т.п.
+* это - строка из таблицы hl_param, где собраны все параметры ворот.
 * выполняется валидацию данных в БД СКУД при работе с cvs
 */
 class phpCVS
 {
-    public $cam = false;        /* номер видеокамеры */
-    public $id_pep;                /* id пользователя владельца ГРЗ */
-    public $grz;            /* грз автомобиля*/
+   // public $cam = false;        /* номер видеокамеры */
+   //  public $grz;            /* грз автомобиля*/
     public $code_validation;            /*результат валидации*/
 	public $tablo_ip; 	/* IP адрес табло */
 	public $tablo_port;	/* порт табло*/
@@ -60,89 +59,12 @@ class phpCVS
 					$this->mode=Arr::get($query, 'MODE');
 					$this->id_parking=Arr::get($query, 'ID_PARKING');
 					$this->isEnter=Arr::get($query, 'IS_ENTER');
-					$this->cam=Arr::get($query, 'ID_CAM');
+					//$this->cam=Arr::get($query, 'ID_CAM');
 					$this->ch=Arr::get($query, 'CH');
 
 			$this->getMessForIdle();
 			return;
 
-    }
-
-
-   public function getIDPEP($id_pep1)
-    {
-
-		$sql='select count(*) from people';
-		$query = DB::query(Database::SELECT, $sql)
-			->execute(Database::instance('fb'))
-			->get('COUNT');
-	   $this->id_pep = $query;
-		return;
-    }
-
-/** 30.04.2025
-*Процесс валидации ГРЗ в указанной точке проезда
-*@param id_dev - точка проезда
-*@param GRZ - номерной знак
-*@return void
-*/
-
- public function check()
-    {
-
-				 //проверка: а не был ли этот ГРЗ в предыдущей обработке за последние ХХ минут?
-		  //для этого использую кеширование: сохраняю ГРЗ в кеш с указанным временем хранения.
-
-		  //echo Debug::vars('100',Cache::instance() );exit;
-		  if (Cache::instance()->get('grz'))
-		   {
-			// Данные найдены в кеше, не надо обрабатывать ГРЗ.
-
-			//$this->code_validation=-1;
-			Log::instance()->add(Log::NOTICE, '101 Повторный прием идентификатора не обрабатывается.');
-
-		   }
-		   else
-		   {
-			// Данных нет в кеше, нужно сгенерировать заново
-			$sql='select rc as event_type, id_pep from REGISTERPASS_HL_2('.$this->id_dev.', \''.$this->grz.'\', NULL)';
-			//echo Debug::vars('92', $sql);exit;
-
-			//Log::instance()->add(Log::NOTICE, '193 '. $sql);
-			$query = DB::query(Database::SELECT, $sql)
-			 ->execute(Database::instance('fb'))
-			 ->as_array();
-
-			$query=Arr::get($query, 0);
-			$this->getMessForEvent(Arr::get($query, 'EVENT_TYPE'));
-			//$this->getMessForIdle();
-			$this->code_validation = Arr::get($query, 'EVENT_TYPE');
-			//echo Debug::vars('119',  Setting::get('delay_cvs', 30));exit;
-			Log::instance()->add(Log::NOTICE, '120 '. Setting::get('delay_cvs', 30));
-			Cache::instance()->set('grz', $this->grz,  Setting::get('delay_cvs', 30)); // Время задержки берется из настроект setting. Если настройка отсутвует, то по по умолчанию берется 30 секунд.
-			}
-	}
-
-	 public function check_old()
-    {
-
-		$t1=microtime(1);
-		$sql='select rc as event_type, id_pep from REGISTERPASS_HL_2('.$this->id_dev.', \''.$this->grz.'\', NULL)';
-		//echo Debug::vars('92', $sql);exit;
-
-		Log::instance()->add(Log::NOTICE, '193 '. $sql);
-		$query = DB::query(Database::SELECT, $sql)
-			->execute(Database::instance('fb'))
-			->as_array();
-
-		$query=Arr::get($query, 0);
-		$this->getMessForEvent(Arr::get($query, 'EVENT_TYPE'));
-		//$this->getMessForIdle();
-		$this->code_validation = Arr::get($query, 'EVENT_TYPE');
-
-		Log::instance()->add(Log::NOTICE, "106 check total_time=".number_format((microtime(1) - $t1), 3)."\r\n");
-
-		return;
     }
 
 
@@ -206,7 +128,7 @@ public function getMessForIdle()
 	*Процесс валидации ГРЗ и UHF в указанной точке проезда средствами php (не процедура в БД СКУД).
 	*@param id_parking - id парковочной площадки
 	*@param is_enter - true - въезд, false - выезд
-	*@param GRZ - номерной знак
+	
 	*@return void
 	*/
 
@@ -294,7 +216,7 @@ Log::instance()->add(Log::NOTICE, '245 мест нет :data', array(':data'=>1)
 
 	/**
 	*@input $garage->id_parking - список парковок, на которых расположены машиноместа гаража
-	*
+	*Функция позволяет определить "правльность" ворот: вдруг к чужим подъехал?
 	*/
    public function checkAccess($listParking)
 	{

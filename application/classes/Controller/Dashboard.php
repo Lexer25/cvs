@@ -158,7 +158,7 @@ class Controller_Dashboard extends Controller{
 		
 		$t2=microtime(1);
 		
-		$cvs=new phpCVS($id_gate);
+		//$cvs=new phpCVS($id_gate);
 		$cvs->grz=hexdec(Arr::get($post, 'key'));//передаю UHF в модель
 		$cvs->code_validation=$result;//передаю в модель результат валидации
 		
@@ -361,7 +361,7 @@ class Controller_Dashboard extends Controller{
 		
 		//===============================================================
 		
-		
+		//записываю событие в журнал
 		$events= new Events();
 		$events->eventCode=$cvs->code_validation;
 		$events->grz=$cvs->grz;
@@ -814,7 +814,7 @@ class Controller_Dashboard extends Controller{
 					));
 				
 				//въезд разрешен, анализирую загрузку гаражей
-				if($cvs->isEnter ) {//если въезд
+				if($cvs->isEnter) {//если въезд
 				
 				if(insideList::checkGrzInParking($identifier->id)) //он уже на парковке
 				{
