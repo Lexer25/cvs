@@ -208,10 +208,7 @@ Log::instance()->add(Log::NOTICE, '245 мест нет :data', array(':data'=>1)
 	*/
 	public function checkPHPout()
 	{
-
 		return true;
-
-
 	}
 
 	/**
@@ -227,8 +224,29 @@ Log::instance()->add(Log::NOTICE, '245 мест нет :data', array(':data'=>1)
 
 		if(in_array ($this->id_parking, $listParking)) return true;
 		return false;
+	}
 
+	/**21.07.2025 проверка категория доступа СКУД. Если есть разрешение на проезд, то ответ true
+	*@input $garage->id_parking - список парковок, на которых расположены машиноместа гаража
+	*Функция позволяет определить "правльность" ворот: вдруг к чужим подъехал?
+	*/
+   public function checkAccessForNonGarage($id_pep)
+	{
 
+		$sql='select count(a.id_dev) from ss_accessuser ssa
+			join access a on a.id_accessname=ssa.id_accessname
+			where ssa.id_pep='.$id_pep.'
+			and a.id_dev='.$this->id_dev;
+		Log::instance()->add(Log::NOTICE, '287 :sql', array(':sql'=> Debug::vars($sql)));	
+			
+	$query = DB::query(Database::SELECT, $sql)
+			->execute(Database::instance('fb'))
+			->get('COUNT');
+			
+	if($query>0) return true;
+	return false;
+
+		
 	}
 
 

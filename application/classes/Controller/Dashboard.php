@@ -387,8 +387,11 @@ class Controller_Dashboard extends Controller{
 			case 50 : //проезда разрешен
 				$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
 				//Log::instance()->add(Log::NOTICE, '307-307  '.Debug::vars($mpt));
-				if(!Arr::get($config, 'debug')) $mpt->openGate($cvs->mode);// даю команду открыть ворота
-			
+				if(!Arr::get($config, 'debug')) {
+						$mpt->openGate($cvs->mode);// даю команду открыть ворота
+				} else {
+					$mpt->result ='OK';
+				}			
 				$i=0;
 					while($mpt->result !='OK' AND $i<10)// делать до 10 попыток
 					{
@@ -603,8 +606,42 @@ class Controller_Dashboard extends Controller{
 			$this->response->status(200);
 			exit;
 		}
-		Log::instance()->add(Log::NOTICE, '487 Начинаю анализ ГРЗ.');
-		echo Debug::vars('488', $this->mainAnalysis());exit;
+		Log::instance()->add(Log::NOTICE, '606 Валидация ГРЗ выполнена успешно, продолжаю работу.');//вывод номера в лог-файл
+		$id_gate = Model::factory('mpt')->getIdGateFromCam(Arr::get($input_data, 'camera'));//получил номер ворот
+		Log::instance()->add(Log::NOTICE, '608 cvs id_gate = :id_gate cam=:cam grz=:grz', 
+					array(':id_gate'=>$id_gate, 
+							':cam'=>Arr::get($input_data, 'camera'),
+							':cam_darect'=>Arr::get($input_data, 'direction'),
+							':grz'=>Arr::get($input_data, 'plate')
+							
+							));
+	$cvs=new phpCVS($id_gate);
+		$identifier=new Identifier(Arr::get($input_data, 'plate'));//передаю ГРЗ в модель);
+		
+		$result=$this->mainAnalysis($identifier,  $cvs);
+		Log::instance()->add(Log::NOTICE, '152   результат работы mainAnalysis' . $result);
+		Log::instance()->add(Log::NOTICE, "185 Stop UHF gate=".$id_gate.", UHF=".Arr::get($post, 'key').", permission =".$result.", total_time=".number_format((microtime(1) - $t1), 3)."\r\n");	
+	//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
+		
+		$t2=microtime(1);
+		
+		//$cvs=new phpCVS($id_gate);
+		$cvs->grz=Arr::get($input_data, 'plate');//передаю UHF в модель
+		$cvs->code_validation=$result;//передаю в модель результат валидации
+		
+		if(Arr::get($input_data_0, 'test')) Log::instance()->add(Log::NOTICE, '169 режим ТЕСТ, команды на открытие ворот НЕ передаются'); 
+			
+		$this->gateControl($identifier, $cvs);
+		Log::instance()->add(Log::NOTICE, "172 gateControl total_time=".number_format((microtime(1) - $t2), 3)."\r\n");		
+
+	
+		$this->response->status(200);
+		
+	Log::instance()->add(Log::NOTICE, "177 Stop UHF gate=".$cvs->id_gate.", eventcount=0, UHF=".$cvs->grz.", code_validation=".$cvs->code_validation.", total_time=".number_format((microtime(1) - $t1), 3)."\r\n");	
+	//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
+		return;
+		
+		
 	}
 	
 	
@@ -733,13 +770,16 @@ class Controller_Dashboard extends Controller{
 	
 	public function mainAnalysis(Identifier $identifier, phpCVS $cvs)
 	{
-		// Log::instance()->add(Log::NOTICE, '729 :data', array(':data'=>Debug::vars($identifier)));
-		// Log::instance()->add(Log::NOTICE, '730 :data', array(':data'=>Debug::vars($cvs)));
+		 Log::instance()->add(Log::NOTICE, '729 identifier :data', array(':data'=>Debug::vars($identifier)));
+		 Log::instance()->add(Log::NOTICE, '730 cvs :data', array(':data'=>Debug::vars($cvs)));
+		//формирую информацию о паркинге (нужные режимы его работы
+		$parking = new Parking($cvs->id_parking);
+		Log::instance()->add(Log::NOTICE, '777 parking :data', array(':data'=>Debug::vars($parking)));
 		Log::instance()->add(Log::NOTICE, '614 Начал работу анализатора для key='.$identifier->id);
 		//начинаю анализ
 		//начинаю проверку полученного идентификатора. grz
 		//$identifier=new Identifier($grz);
-		//Log::instance()->add(Log::NOTICE, '672 Identifier'. Debug::vars($identifier));
+		Log::instance()->add(Log::NOTICE, '776 Identifier'. Debug::vars($identifier));
 		if(!$identifier->status==Identifier::VALID){
 			//зафиксировать в журнале отказ от дальнейшей обработки
 			Log::instance()->add(Log::NOTICE, '675 карта :key не валидна status=:status. Завершаю обработку.',
@@ -750,7 +790,7 @@ class Controller_Dashboard extends Controller{
 			return Events::UNKNOWNCARD;
 			//exit;
 		} 
-		Log::instance()->add(Log::NOTICE, '683 карта :key валидна status=:status. Продолжаю обработку.',
+		Log::instance()->add(Log::NOTICE, '787 карта :key валидна status=:status. Продолжаю обработку.',
 				array(
 					':key'=>$identifier->id,
 					':status'=>$identifier->status
@@ -762,11 +802,7 @@ class Controller_Dashboard extends Controller{
 			//$cvs=new phpCVS($id_gate);
 			//echo Debug::vars('106 информация о воротах', $cvs);
 			
-			//надо иметь информацию о гараже.
-			$garage=new Garage($identifier->id_garage);//это - модель гаража, куда едет ГРЗ. Этот параметр беретс из $identifier->id_garage, но для отладки использую фиксировнное значение  $id_garage
-			//echo Debug::vars('109 ГРЗ едет вот в этот гараж', $garage);
-		
-		
+			
 		//если у ГРЗ есть гараж, то надо делать только проверки свободных мест.
 		//если же гаража нет, то надо проверять категорию доступа.		
 		if(is_null($identifier->id_garage)) //гаража нет.
@@ -778,9 +814,29 @@ class Controller_Dashboard extends Controller{
 					));
 			//тут надо вызвать метод анализа без гаража, только по категории доступа.
 			//результат анализа - можно или нельзя!
-			exit;
+			
+//ГАРАЖА НЕТ!!!			
+			if($cvs->isEnter) {//если въезд
+			
+				if ($cvs->checkAccessForNonGarage($identifier->id_pep)) return Events::OK;
+				return Events::ACCESSDENIED;
+			} else {
+				return Events::OK;
+			}
 
 		} 
+		
+//ГАРАЖА ЕСТЬ!!!			
+		//надо иметь информацию о гараже.
+			$garage=new Garage($identifier->id_garage);//это - модель гаража, куда едет ГРЗ. Этот параметр беретс из $identifier->id_garage, но для отладки использую фиксировнное значение  $id_garage
+			//echo Debug::vars('109 ГРЗ едет вот в этот гараж', $garage);
+		
+		Log::instance()->add(Log::NOTICE, '803  гараж :garage.',
+				array(
+					':key'=>$identifier->id,
+					':garage'=>Debug::vars($garage)
+					));		
+		
 		Log::instance()->add(Log::NOTICE, '718 карта :key имеет гараж :garage.',
 				array(
 					':key'=>$identifier->id,
@@ -813,7 +869,7 @@ class Controller_Dashboard extends Controller{
 					':status'=>$identifier->status
 					));
 				
-				//въезд разрешен, анализирую загрузку гаражей
+//ВЪЕЗД!!!				//въезд разрешен, анализирую загрузку гаражей
 				if($cvs->isEnter) {//если въезд
 				
 				if(insideList::checkGrzInParking($identifier->id)) //он уже на парковке
@@ -826,23 +882,26 @@ class Controller_Dashboard extends Controller{
 					if($cvs->checkPHPin($garage)){//если в гараже есть места или именно этот ГРЗ уже стоит в гараже
 						
 						//въезд разрешен
-						$permission = true;
+						
 						return Events::OK;	
 					} else {
 						//въезд запрещен (нет мест)
-						$permission = false;
+						
 						return Events::CARLIMITEXCEEDED;	
 					}
+//ВЫЕЗД!!!
 				} else {//если выезд
+				
+					
 					if($cvs->checkPHPout($garage)){
 						
 						//выезд разрешен
-						$permission = true;
+					
 						return Events::OK;
 					} else {
 						
 						//выезд запрещен
-						$permission = false;
+						
 						return Events::ACCESSDENIED;	
 					}
 				}

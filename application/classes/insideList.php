@@ -26,19 +26,6 @@ class insideList {
 				
 			);
 			
-	//если такой id_pep уже есть, то его надо удалить и добавить обновленные параметры.
-	
-	/* $sql=__('delete from hl_inside hli where hli.id_pep=:ID_PEP', $_data);
-		Log::instance()->add(Log::NOTICE, '30  :data', array(':data'=>$sql));	exit;
-		try
-			{
-				$query = DB::query(Database::DELETE, iconv('UTF-8', 'CP1251',$sql))
-				->execute(Database::instance('fb'));
-				
-			} catch (Exception $e) {
-				Log::instance()->add(Log::DEBUG, 'Line 4 '. $e->getMessage());
-							
-			} */
 	
 	$sql=__('INSERT INTO HL_INSIDE (ENTERTIME,ID_CARD,ID_PEP,COUNTERID) VALUES (:ENTERTIME,:ID_CARD,:ID_PEP,:COUNTERID)', $_data);
 		
@@ -49,7 +36,7 @@ class insideList {
 				->execute(Database::instance('fb'));
 				
 			} catch (Exception $e) {
-				Log::instance()->add(Log::DEBUG, 'Line 4 '. $e->getMessage());
+				Log::instance()->add(Log::DEBUG, 'Line 39 '. $e->getMessage());
 							
 			}
 		
@@ -68,14 +55,15 @@ class insideList {
 			);
 	
 		$sql=__('delete from hl_inside hli where hli.id_pep=:ID_PEP', $_data);
-		//Log::instance()->add(Log::NOTICE, '71  :data', array(':data'=>$sql));	exit;
+		Log::instance()->add(Log::NOTICE, '71  :data', array(':data'=>$sql));	//exit;
 		try
 			{
 				$query = DB::query(Database::DELETE, iconv('UTF-8', 'CP1251',$sql))
 				->execute(Database::instance('fb'));
+				Log::instance()->add(Log::DEBUG, 'Line 78 people :id_pep из паркинга :id_parking удалени успешно. ', array(':id_pep'=>$this->id_pep, ':id_parking'=>$this->id_parking));
 				
 			} catch (Exception $e) {
-				Log::instance()->add(Log::DEBUG, 'Line 4 '. $e->getMessage());
+				Log::instance()->add(Log::DEBUG, 'Line 78 '. $e->getMessage());
 							
 			}
 			
@@ -105,7 +93,7 @@ class insideList {
 				return false;
 				
 			} catch (Exception $e) {
-				Log::instance()->add(Log::DEBUG, 'Line 4 '. $e->getMessage());
+				Log::instance()->add(Log::DEBUG, 'Line 96 '. $e->getMessage());
 							
 			}
 			

@@ -28,10 +28,11 @@ class Identifier
     {
        $sql='select c.id_pep, c.id_cardtype, hlo.id_garage from card c
 				join people p on p.id_pep=c.id_pep
-				join hl_orgaccess hlo on hlo.id_org=p.id_org
+				left join hl_orgaccess hlo on hlo.id_org=p.id_org
 				where c.id_card=\''.$id.'\'';
 
-		//echo Debug::vars('31', $sql);exit;			
+		//echo Debug::vars('31', $sql);exit;	
+//Log::instance()->add(Log::NOTICE, '35 '.$sql); exit;		
 	   $query = Arr::flatten(DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->as_array()
