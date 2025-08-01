@@ -17,7 +17,7 @@ class insideList {
 	public function addToInside()//добавление события в таблицу HL_EVENTS
 	{
 	
-	$this->delFromInside();
+	//$this->delFromInside();
 	$_data=array(
 				':ENTERTIME'=>'\'now\'',
 				':ID_CARD'=>'\''.$this->id_card.'\'',
@@ -44,7 +44,7 @@ class insideList {
 	}
 	
 	
-	public function delFromInside()//добавление события в таблицу HL_EVENTS
+	public function delFromInside()
 	{
 		$_data=array(
 				':ENTERTIME'=>'\'now\'',

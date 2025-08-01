@@ -96,14 +96,11 @@ class Controller_Dashboard extends Controller{
 	{
 		Log::instance()->add(Log::NOTICE, "88 start UHF action_sendMPT");
 		$t1=microtime(1);
-		Cache::instance()->set('mutex_text_','ttt');
-		Log::instance()->add(Log::NOTICE, '10-10 debug :data', array(':data'=>Cache::instance()->get('mutex_text_')));
-		Log::instance()->add(Log::NOTICE, '10-20 debug :data', array(':data'=>Setting::get('delay_cvs', 20)));
 		
 		//фиксирую полученные данные из $_OST в лог-файл
 		//Log::instance()->add(Log::NOTICE, '85 data receive MPT '.Debug::vars($_POST));// exit;
 		$input_data_0=$_POST;//извлекаю данных из полученного пакета
-		Log::instance()->add(Log::NOTICE, '103-10 debug :data', array(':data'=>number_format((microtime(1) - $t1), 3)));
+		//Log::instance()->add(Log::NOTICE, '103-10 debug :data', array(':data'=>number_format((microtime(1) - $t1), 3)));
 		if(!Arr::get($input_data_0, 'test'))
 		{
 			//если в запросе нет поля test, то беру IP адрес из запроса
@@ -138,22 +135,14 @@ class Controller_Dashboard extends Controller{
 		
 		
 		
-		Log::instance()->add(Log::NOTICE, '103-20 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
-		Log::instance()->add(Log::NOTICE, '140 Валидация UHF выполнена успешно, продолжаю работу.');//вывод номера в лог-файл
+		//Log::instance()->add(Log::NOTICE, '103-20 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
+		//Log::instance()->add(Log::NOTICE, '140 Валидация UHF выполнена успешно, продолжаю работу.');//вывод номера в лог-файл
 
 		$id_gate=Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip'), Arr::get($post, 'ch'));
 		
-		Log::instance()->add(Log::NOTICE, '145-0 mutex  :mutex ', array(':mutex'=>Cache::instance()->get('mutex_'.$id_gate)));	
-		
-		if($this->setMutexIdentifier($id_gate, hexdec(Arr::get($post, 'key')))) 
-		{
-			Log::instance()->add(Log::NOTICE, '145 mutex занят обработкой :mutex, прекращаю обработку.', array(':mutex'=>$this->getMutexIdentifier($id_gate)));	
-			Log::instance()->add(Log::NOTICE, '149 debug :data', array(':data'=>Cache::instance()->get('mutex_3')));
-			exit;
 			
-		}
-		Log::instance()->add(Log::NOTICE, "149 mutex свободен, продолжаю обработку.");	
-		Log::instance()->add(Log::NOTICE, '160 Получены данные ch = :ch, ip=:ip, key= ":key" (:keyDec), gate :gate',
+	
+	Log::instance()->add(Log::NOTICE, '160 Получены данные ch = :ch, ip=:ip, key= ":key" (:keyDec), gate :gate',
 					array( 
 						':ip'=>Arr::get($post, 'ip'),
 						':ch'=>Arr::get($post, 'ch'),
@@ -162,9 +151,9 @@ class Controller_Dashboard extends Controller{
 						':gate'=>$id_gate
 						)); 
 							
-		Log::instance()->add(Log::NOTICE, '103-30 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
+	//	Log::instance()->add(Log::NOTICE, '103-30 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
 		$cvs=new phpCVS($id_gate);
-		Log::instance()->add(Log::NOTICE, '103-40 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
+	//	Log::instance()->add(Log::NOTICE, '103-40 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
 		$identifier=new Identifier(hexdec(Arr::get($post, 'key')));
 		
 		if (Cache::instance()->get('id_gate_'.$id_gate))
@@ -172,17 +161,17 @@ class Controller_Dashboard extends Controller{
 			// Данные найдены в кеше, не надо обрабатывать данные от ворот.
 				
 			//$this->code_validation=-1;
-			Log::instance()->add(Log::NOTICE, '99 ворота '.$id_gate.' открыты от предыдущего ГРЗ '.$identifier->id.'. Обработка данных прекращена.'); 
+			//Log::instance()->add(Log::NOTICE, '99 ворота '.$id_gate.' открыты от предыдущего ГРЗ '.$identifier->id.'. Обработка данных прекращена.'); 
 			exit;
 			
 		   }
 		   else
 		   {
-			Log::instance()->add(Log::NOTICE, '104 Данных от ворот '.$id_gate.' grz '.$identifier->id.'  не было давно, начанию обработку.'); 
+			//Log::instance()->add(Log::NOTICE, '104 Данных от ворот '.$id_gate.' grz '.$identifier->id.'  не было давно, начанию обработку.'); 
 
 			}
 		
-		Log::instance()->add(Log::NOTICE, '103-50 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
+		//Log::instance()->add(Log::NOTICE, '103-50 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
 		  			
 			//проверка: а не был ли этот ГРЗ в предыдущей обработке за последние ХХ минут?
 		  //для этого использую кеширование: сохраняю ГРЗ в кеш с указанным временем хранения.
@@ -193,13 +182,13 @@ class Controller_Dashboard extends Controller{
 			// Данные найдены в кеше, не надо обрабатывать ГРЗ.
 				
 			//$this->code_validation=-1;
-			Log::instance()->add(Log::NOTICE, '101 Повторный прием идентификатора grz '.$identifier->id.'. Обработка прекращена'); 
+			//Log::instance()->add(Log::NOTICE, '101 Повторный прием идентификатора grz '.$identifier->id.'. Обработка прекращена'); 
 			exit;
 			
 		   }
 		
 	$result=$this->mainAnalysis($identifier,  $cvs);
-		Log::instance()->add(Log::NOTICE, '103-50 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
+		//Log::instance()->add(Log::NOTICE, '103-50 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
 		Log::instance()->add(Log::NOTICE, '187 результат работы mainAnalysis :result, grz :grz gate :gate', array(
 				':result'=>$result,
 				':grz'=>$identifier->id,
@@ -209,29 +198,33 @@ class Controller_Dashboard extends Controller{
 		//делаю набор условий для последующей обработки. Если результат 50 (можно проезжать), то жду 30 секунд.
 			switch($result){
 				case 50:
-					Log::instance()->add(Log::NOTICE, '163 фискирую в кеш что ворота :gate открыты, жду :delay секунд', array(
+
+					$this->setMutexIdentifier($id_gate, $identifier->id); //занял приоритет 
+					Log::instance()->add(Log::NOTICE, '206 записал mutex значением :data', array(':data'=>$id_gate, ':data'=>$identifier->id));
+								
+					/* Log::instance()->add(Log::NOTICE, '163 фискирую в кеш что ворота :gate открыты, жду :delay секунд', array(
 					':result'=>$result,
 					':grz'=>$identifier->id,
 					':gate'=>$id_gate,
 					':delay'=>Setting::get('delay_cvs', 122),
-					));
+					)); */
 						Cache::instance()->set('id_gate_'.$id_gate, $id_gate, Setting::get('delay_cvs', 120)); // Проезд разрешен. Блокирую ворота на заданное время. В течении этого времени обработка других ГРЗ производится не будет.
 						
 				break;
 				default:
-					Log::instance()->add(Log::NOTICE, '163-0 фиксирую в кеш грз :grz не может ездить, жду его через не менее :delay секунд', array(
+					/* Log::instance()->add(Log::NOTICE, '163-0 фиксирую в кеш грз :grz не может ездить, жду его через не менее :delay секунд', array(
 					':result'=>$result,
 					':grz'=>$identifier->id,
 					':gate'=>$id_gate,
 					':delay'=>Setting::get('delay_cvs', 122),
-					));
+					)); */
 						Cache::instance()->set('grz_'.$identifier->id, $identifier->id, Setting::get('delay_cvs', 120)); // Этому ГРЗ проезд запрещен. Если он опять будет передан в это отрезок времени, то заблокируем его.
 						
 					break;
 			}
 			
 			
-		Log::instance()->add(Log::NOTICE, '103-60 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
+		//Log::instance()->add(Log::NOTICE, '103-60 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
 		
 		Log::instance()->add(Log::NOTICE, "220 Stop UHF gate=".$id_gate.", UHF=".Arr::get($post, 'key').", permission =".$result.", total_time=".number_format((microtime(1) - $t1), 3));	
 	//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
@@ -243,25 +236,33 @@ class Controller_Dashboard extends Controller{
 		$cvs->code_validation=$result;//передаю в модель результат валидации
 		$cvs->getMessForEvent($result);//формирую текстовое сообщение для табло
 		
-		//Log::instance()->add(Log::NOTICE, '220-1 226 '.Debug::vars($cvs)); 
+	Log::instance()->add(Log::NOTICE, '242 uhf mutex перед gateCOntrol имеет значение  :mutex.', array(':mutex'=>$this->getMutexIdentifier($id_gate)));	
+						
+	
+		if($this->getMutexIdentifier($id_gate) != $cvs->grz) 
+					{
+						Log::instance()->add(Log::NOTICE, '248 mutex занят обработкой :mutex, прекращаю обработку.', array(':mutex'=>$this->getMutexIdentifier($id_gate)));	
+						Log::instance()->add(Log::NOTICE, '249 debug :data', array(':data'=>Cache::instance()->get('mutex_3')));
+						exit;
+						
+					}
+					
+		Log::instance()->add(Log::NOTICE, '251 mutex свободен.', array(':mutex'=>$this->getMutexIdentifier($id_gate)));
 		
-		
-		if(Arr::get($input_data_0, 'test')) Log::instance()->add(Log::NOTICE, '169 режим ТЕСТ, команды на открытие ворот НЕ передаются'); 
-			
 		$this->gateControl($identifier, $cvs);
 		Log::instance()->add(Log::NOTICE, "236 gateControl total_time=".number_format((microtime(1) - $t2), 3));		
 
 	
 		//$this->response->status(200);
-		Log::instance()->add(Log::NOTICE, '103-70 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
+		//Log::instance()->add(Log::NOTICE, '103-70 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
 		
 	Log::instance()->add(Log::NOTICE, "242 Stop UHF gate=".$cvs->id_gate.", eventcount=0, UHF=".$cvs->grz.", code_validation=".$cvs->code_validation.", total_time=".number_format((microtime(1) - $t1), 3));	
 	//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
-	Log::instance()->add(Log::NOTICE, '103-80 end debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
+	//Log::instance()->add(Log::NOTICE, '103-80 end debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($post, 'key')));
 		
-		$this->resetMutexIdentifier($id_gate); 
+		//$this->resetMutexIdentifier($id_gate); 
 		
-		//Log::instance()->add(Log::NOTICE, '258 Освободил mutex');	
+		Log::instance()->add(Log::NOTICE, '258 Освободил mutex');	
 		return;
 		
 		
@@ -269,115 +270,6 @@ class Controller_Dashboard extends Controller{
 	
 	
 	
-	public function action_sendMPT_old()
-	{	
-		//25.05.2025 совмещаю обработку реальных запросов и тестовых. Это сделано для того, чтобы можно было тестировать систему
-		//не используя свойство $this->ip_is_test
-		//в тестовом запросе имеется поле test=>1.
-		Log::instance()->add(Log::NOTICE, "257 start UHF action_sendMPT");
-		$t1=microtime(1);
-		
-		//фиксирую полученные данные из $_OST в лог-файл
-		//Log::instance()->add(Log::NOTICE, '85 data receive MPT '.Debug::vars($_POST));// exit;
-		$input_data_0=$_POST;//извлекаю данных из полученного пакета
-		
-		if(!Arr::get($input_data_0, 'test'))
-		{
-			//если в запросе нет поля test, то беру IP адрес из запроса
-			$input_data_0['ip']=Request::$client_ip;
-		}
-		
-		//	Log::instance()->add(Log::NOTICE, '130 data send MPT '.Debug::vars($input_data_0)); //exit;
-		
-		$input_data = $input_data_0;
-		
-		
-		//Log::instance()->add(Log::NOTICE, '81 Получил данные UHF '. Debug::vars($input_data));
-		$post=Validation::factory($input_data);
-		$post->rule('ch', 'not_empty')//номер канала должен быть 
-					->rule('ch', 'digit')
-					->rule('ip', 'not_empty')//IP контроллера должен быть
-					->rule('ip', 'ip')
-					->rule('ip', 'Model_cvss::checkIpIsPresent') 
-					->rule('key', 'not_empty')//значение ГРЗ
-					->rule('key', 'regex', array(':value', '/^[ABCDEF\d]{3,8}+$/')) // https://regex101.com/ строк буквы АНГЛ алфавита
-					
-					;
-				
-		if(!$post->check())
-		{
-			
-			Log::instance()->add(Log::NOTICE, '95 Входные данные UHF не полные '. Debug::vars($post->errors()));//вывод номера в лог-файл
-			Log::instance()->add(Log::NOTICE, '131 Обработку UHF прекращаю.');//вывод номера в лог-файл
-			//$this->response->status(400);
-			return;
-		}
-		Log::instance()->add(Log::NOTICE, '140 Валидация UHF выполнена успешно, продолжаю работу.');//вывод номера в лог-файл
-		
-		
-		//Определяю ворота
-		$id_gate=Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip'), Arr::get($post, 'ch'));
-		Log::instance()->add(Log::NOTICE, '160 Получены данные ch = :ch, ip=:ip, key= ":key" (:keyDec), gate :gate',
-					array( 
-						':ip'=>Arr::get($post, 'ip'),
-						':ch'=>Arr::get($post, 'ch'),
-						':key'=>Arr::get($post, 'key'),
-						':keyDec'=>hexdec(Arr::get($post, 'key')),
-						':gate'=>$id_gate
-						)); 
-		
-	
-	//Этап 2.
-	//Создаю экземпляр класса. Это необходимо для проверки разрешения на въезд
-	//Результатом этапа являются параметры $cvs->code_validation
-	//В процессе валидации заполняются таблицы базы данных, автоматически фиксируя проезд.
-		$cvs=new phpCVS($id_gate);
-		$cvs->grz=hexdec(Arr::get($input_data, 'key'));//передаю UHF в модель
-		
-		Log::instance()->add(Log::NOTICE, "148 UHF befor check total_time=".number_format((microtime(1) - $t1), 3));	
-		// ПРОВЕРКА: МОЖНО ЛИ ВЪЕЗЖАТЬ???
-		$cvs->check(); 
-
-
-		$direct='выезд';
-		if($cvs->isEnter) $direct='въезд';
-		
-		Log::instance()->add(Log::NOTICE, '190  cvs после check()  id_gate = :id_gate ip=:ip channel=:channel id_dev=:id_dev key=:key direct=:direct validate=:validate, total_time=:total_time ', 
-					array(':id_gate'=>$cvs->id_gate, 
-							':ip'=>$cvs->box_ip,
-							':channel'=>$cvs->ch,
-							':id_dev'=>$cvs->id_dev,
-							':key'=>$cvs->grz,
-							':direct'=>$direct,
-							':validate'=>$cvs->code_validation,
-							':total_time'=>number_format((microtime(1) - $t1), 3),
-							));		
-		
-			//$this->response->status(200);
-		Log::instance()->add(Log::NOTICE, "169 after response total_time=".number_format((microtime(1) - $t1), 3));		
-			$t2=microtime(1);
-		//============================= Управление воротами!!!
-		//если это не режим ТЕСТ, то можно передавать управление воротам.
-
-		if(!Arr::get($input_data_0, 'test'))
-		{
-			
-			$this->gateControl($identifier, $cvs);
-		} else {
-			
-			Log::instance()->add(Log::NOTICE, '348 режим ТЕСТ, команды на открытие ворот НЕ передаются'); 
-		}
-		
-		Log::instance()->add(Log::NOTICE, "183 gateControl total_time=".number_format((microtime(1) - $t2), 3));		
-
-	
-		//$this->response->status(200);
-		
-	Log::instance()->add(Log::NOTICE, "185 Stop UHF gate=".$cvs->id_gate.", eventcount=0, UHF=".$cvs->grz.", code_validation=".$cvs->code_validation.", total_time=".number_format((microtime(1) - $t1), 3));	
-	//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
-		return;
-	}
-
 	
 		
 	/**20.07.2025
@@ -507,7 +399,7 @@ class Controller_Dashboard extends Controller{
 						if($cvs->isEnter==1) {// въезд
 							$inside->addToInside();
 						} else {
-							if($identifier->checkInParking($cvs->id_parking))
+							if(!$identifier->checkInParking($cvs->id_parking))
 							{
 								$inside->delFromInside();//если на парковке, то удаляю пипла по его id_pep
 							} else {
@@ -663,26 +555,6 @@ class Controller_Dashboard extends Controller{
 	}
 	
 	
-		
-	public function action_opengate_2025_06_13()
-	{
-		
-		
-		$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
-		
-		$id_gate=Arr::get($input_data_0, 'id');
-		$cvs=new phpCVS($id_gate);// сделал экземпляр, чтобы получить IP, port, и номер канала ch
-		
-		$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
-		$mpt->openGate($cvs->ch);// даю команду открыть ворота
-		//Log::instance()->add(Log::NOTICE, '426 '. Debug::vars($mpt));
-		Log::instance()->add(Log::NOTICE, '427 открыл ворота :id :ip :port :ch', array(':id'=>$id_gate, ':ip'=>$cvs->box_ip, ':port'=>$cvs->box_port, ':ch'=>$cvs->ch));
-		
-		//послать команду Открыть дверь.
-		
-	}
-	
-	
 	public function action_exec()
 	{
 		$t1=microtime(1);
@@ -691,7 +563,7 @@ class Controller_Dashboard extends Controller{
 		$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
 			
 		$input_data=Arr::get($input_data_0, 'plate');
-		Log::instance()->add(Log::NOTICE, '676 debug :data', array(':data'=>Debug::vars($input_data)));
+		//Log::instance()->add(Log::NOTICE, '676 debug :data', array(':data'=>Debug::vars($input_data)));
 		
 		//Валидация данных: все ли правильно?
 		$post=Validation::factory($input_data);
@@ -707,7 +579,7 @@ class Controller_Dashboard extends Controller{
 					
 					;
 		//Log::instance()->add(Log::NOTICE, '665-05 debug :data', array(':data'=>(microtime(true) - $t1)));
-		Log::instance()->add(Log::NOTICE, '665-05 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
+		//Log::instance()->add(Log::NOTICE, '665-05 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
 		
 		if(!$post->check())
 		{
@@ -717,19 +589,13 @@ class Controller_Dashboard extends Controller{
 			//$this->response->status(200);
 			exit;
 		}
-		Log::instance()->add(Log::NOTICE, '665-10 Валидация ГРЗ :grz выполнена успешно, продолжаю работу debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
+		//Log::instance()->add(Log::NOTICE, '665-10 Валидация ГРЗ :grz выполнена успешно, продолжаю работу debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
 		
 		
-		Log::instance()->add(Log::NOTICE, "722 mutex свободен, продолжаю работу.");	
 		$id_gate = Model::factory('mpt')->getIdGateFromCam(Arr::get($input_data, 'camera'));//получил номер ворот
 		
-		if(!$this->setMutexIdentifier($id_gate, hexdec(Arr::get($post, 'plate')))) 
-		{
-			Log::instance()->add(Log::NOTICE, "145 mutex занят, прекращаю обработку.");	
-			exit;
-			
-		}
 		
+			
 		Log::instance()->add(Log::NOTICE, '608 cvs id_gate = :id_gate cam=:cam grz=:grz', 
 					array(':id_gate'=>$id_gate, 
 							':cam'=>Arr::get($input_data, 'camera'),
@@ -737,9 +603,9 @@ class Controller_Dashboard extends Controller{
 							':grz'=>Arr::get($input_data, 'plate')
 							
 							));
-		Log::instance()->add(Log::NOTICE, '665-20 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
+		//Log::instance()->add(Log::NOTICE, '665-20 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
 	$cvs=new phpCVS($id_gate);
-	Log::instance()->add(Log::NOTICE, '665-30 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
+	//Log::instance()->add(Log::NOTICE, '665-30 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
 		$identifier=new Identifier(Arr::get($input_data, 'plate'));//передаю ГРЗ в модель);
 		
 		
@@ -773,11 +639,11 @@ class Controller_Dashboard extends Controller{
 			exit;
 			
 		   }	
-		   Log::instance()->add(Log::NOTICE, '665-40 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
+		  // Log::instance()->add(Log::NOTICE, '665-40 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
 	$result=$this->mainAnalysis($identifier,  $cvs);
 		Log::instance()->add(Log::NOTICE, '152   результат работы mainAnalysis ' . $result);
-		Log::instance()->add(Log::NOTICE, "185 Stop GRZ gate=".$id_gate.", GRZ=".Arr::get($post, 'key').", permission =".$result.", total_time=".number_format((microtime(1) - $t1), 3));	
-Log::instance()->add(Log::NOTICE, '665-50 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
+		//Log::instance()->add(Log::NOTICE, "185 Stop GRZ gate=".$id_gate.", GRZ=".Arr::get($post, 'key').", permission =".$result.", total_time=".number_format((microtime(1) - $t1), 3));	
+//Log::instance()->add(Log::NOTICE, '665-50 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
 		
 		$t2=microtime(1);
 		
@@ -786,44 +652,61 @@ Log::instance()->add(Log::NOTICE, '665-50 debug :id :data', array(':data'=>numbe
 		$cvs->code_validation=$result;//передаю в модель результат валидации
 		$cvs->getMessForEvent($result);//формирую текстовое сообщение для табло
 		
+		
 		if(Arr::get($input_data_0, 'test')) Log::instance()->add(Log::NOTICE, '169 режим ТЕСТ, команды на открытие ворот НЕ передаются'); 
 			
-		$this->gateControl($identifier, $cvs);
-		Log::instance()->add(Log::NOTICE, "172 gateControl total_time=".number_format((microtime(1) - $t2), 3));		
+		
 
 	
 		//$this->response->status(200);
-		Log::instance()->add(Log::NOTICE, '665-60 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
+		//Log::instance()->add(Log::NOTICE, '665-60 debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
 		//делаю набор условий для последующей обработки. Если результат 50 (можно проезжать), то жду 30 секунд.
 			switch($result){
 				case 50:
-					Log::instance()->add(Log::NOTICE, '163 фискирую в кеш что ворота :gate открыты, жду :delay секунд', array(
+					$this->setMutexIdentifier($id_gate, $identifier->id); 
+					Log::instance()->add(Log::NOTICE, '206 зянял mutex значением :data', array(':data'=>$id_gate, ':data'=>$identifier->id));
+
+					/* Log::instance()->add(Log::NOTICE, '163 фискирую в кеш что ворота :gate открыты, жду :delay секунд', array(
 					':result'=>$result,
 					':grz'=>$identifier->id,
 					':gate'=>$id_gate,
 					':delay'=>Setting::get('delay_cvs', 122),
-					));
+					)); */
 						Cache::instance()->set('id_gate_'.$id_gate, $id_gate, Setting::get('delay_cvs', 120)); // Проезд разрешен. Блокирую ворота на заданное время. В течении этого времени обработка других ГРЗ производится не будет.
 						
 				break;
 				default:
-					Log::instance()->add(Log::NOTICE, '163-0 фиксирую в кеш грз :grz не может ездить, жду его через не менее :delay секунд', array(
+				/* 	Log::instance()->add(Log::NOTICE, '163-0 фиксирую в кеш грз :grz не может ездить, жду его через не менее :delay секунд', array(
 					':result'=>$result,
 					':grz'=>$identifier->id,
 					':gate'=>$id_gate,
 					':delay'=>Setting::get('delay_cvs', 120),
-					));
+					)); */
 						Cache::instance()->set('grz_'.$identifier->id, $identifier->id, Setting::get('delay_cvs', 120)); // Этому ГРЗ проезд запрещен. Если он опять будет передан в это отрезок времени, то заблокируем его.
 						
 					break;
 			}
+				
+				
+				Log::instance()->add(Log::NOTICE, '694 grz mutex перед gateCOntrol имеет значение  :mutex.', array(':mutex'=>$this->getMutexIdentifier($id_gate)));	
+				
+				if($this->getMutexIdentifier($id_gate) != $cvs->grz) 
+					{
+						Log::instance()->add(Log::NOTICE, '145 mutex занят обработкой :mutex, прекращаю обработку.', array(':mutex'=>$this->getMutexIdentifier($id_gate)));	
+						Log::instance()->add(Log::NOTICE, '149 debug :data', array(':data'=>Cache::instance()->get('mutex_3')));
+						exit;
+						
+					}
+		Log::instance()->add(Log::NOTICE, '700 grz mutex свободен.', array(':mutex'=>$this->getMutexIdentifier($id_gate)));
 		
+		$this->gateControl($identifier, $cvs);
+		Log::instance()->add(Log::NOTICE, "172 gateControl total_time=".number_format((microtime(1) - $t2), 3));		
 	Log::instance()->add(Log::NOTICE, "788 Stop UHF gate=".$cvs->id_gate.", eventcount=0, UHF=".$cvs->grz.", code_validation=".$cvs->code_validation.", total_time=".number_format((microtime(1) - $t1), 3));	
 	//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
-	Log::instance()->add(Log::NOTICE, '665-70 end debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
+	//Log::instance()->add(Log::NOTICE, '665-70 end debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>Arr::get($input_data, 'plate')));
 	
 
-	$this->resetMutexIdentifier($id_gate); 
+	//$this->resetMutexIdentifier($id_gate); 
 	Log::instance()->add(Log::NOTICE, "818 mutex освободил.");	
 	return;
 		
@@ -836,116 +719,7 @@ Log::instance()->add(Log::NOTICE, '665-50 debug :id :data', array(':data'=>numbe
 	//особенность: данные от cvs передаются в массиве POST в виде двумерного массива
 	// "messageId" => <small>string</small><span>(36)</span> "dd03e3d2-ac2d-485a-8c5e-95c5d6ec869c"
     //"plate" => <small>array</small><span>(16)</span> <span>(
-	public function action_exec_old()
-	{	
-		$t1=microtime(1);
-		Log::instance()->add(Log::NOTICE, "805 start CVS action_exec");
-		
-		
-		
-		//$input_data_0=$_POST;//извлекаю данных из полученного пакета
-		$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
-			
-		//$input_data=json_decode(Arr::get($input_data_0, 'plate'), true);
-		
-		$input_data=Arr::get($input_data_0, 'plate');
-		
-		//Валидация данных: все ли правильно?
-		$post=Validation::factory($input_data);
-		
-		
-		$post->rule('id', 'not_empty')//номер события
-					->rule('id', 'digit')
-					->rule('id', 'Model_cvss::isEventUniq') //событие уникальное, не совпадает с ранее обработанным
-					->rule('camera', 'not_empty')//номер видеокамеры
-					->rule('camera', 'digit')
-					->rule('camera', 'Model_cvss::checkCamIsPresent') 
-					->rule('plate', 'not_empty')//значение ГРЗ
-					->rule('plate', 'regex', array(':value', '/^[A-Za-z\d]{3,10}+$/')) // https://regex101.com/ строго буквы АНГЛ алфавита
-					
-					;
-		//Log::instance()->add(Log::NOTICE, '460 контроль '. Debug::vars($input_data));  
-		if(!$post->check())
-		{
-			
-			Log::instance()->add(Log::NOTICE, '125 Входные данные cvs не полные '. Debug::vars($post->errors())); //exit;//вывод номера в лог-файл
-			//echo Debug::vars('126 валидация прошла с ошибкой', $post->errors());exit;
-			//$this->response->status(200);
-			return;
-		}
 	
-		
-		
-	//====================			
-		$id_gate = Model::factory('mpt')->getIdGateFromCam(Arr::get($input_data, 'camera'));//получил номер ворот
-
-		//Log::instance()->add(Log::NOTICE, '133 получил id_gate = :id_gate по номеру камеры=:cam.', array(':id_gate'=>$id_gate, ':cam'=>Arr::get($input_data, 'camera')));
-	
-				
-		
-		 //$cvs=new phpCVS(Arr::get($input_data, 'camera'));
-		 $cvs=new phpCVS(Model_cvss::getGateFromCam(Arr::get($post, 'camera')));
-		 //Log::instance()->add(Log::NOTICE, '117 '. Debug::vars($cvs));
-		 //echo Debug::vars('168', $cvs);exit;
-		
-		$cvs->grz=Arr::get($input_data, 'plate');//передаю ГРЗ в модель
-		$cvs->timeStamp=Arr::get($input_data, 'dateTime', -1);//передал в модель метку времени
-		$cvs_event_id=Arr::get($input_data, 'id');//передал в модель номер события
-		
-		// вызов процесса валидации. Результат валидации сохраняется в $cvs как значения параметров
-		//$cvs->check(); 
-		$cvs->checkPHPin(); 
-		//echo Debug::vars('176', $cvs);exit;
-		
-		//Log::instance()->add(Log::NOTICE, '117 '. Debug::vars($cvs));
-		$direct='выезд';
-		if($cvs->isEnter) $direct='въезд';
-		$dt=0;
-		$dt=time()-strtotime($cvs->timeStamp);
-		
-		
-		Log::instance()->add(Log::NOTICE, '593 cvs id_gate = :id_gate cam=:cam grz=:grz direct=:direct validate=:validate ', 
-					array(':id_gate'=>$id_gate, 
-							':cam'=>Arr::get($input_data, 'camera'),
-							':cam_darect'=>Arr::get($input_data, 'direction'),
-							':grz'=>Arr::get($input_data, 'plate'),
-							':direct'=>$direct,
-							':validate'=>$cvs->code_validation,
-							));
-		//$this->response->status(200);
-		//return;
-		
-		
-	//============================= Управление воротами!!!
-		//если это не режим ТЕСТ, то можно передавать управление воротам.
-
-		if(!Arr::get($input_data, 'test'))
-		{
-			
-			$this->gateControl($cvs);
-		} else {
-			
-			Log::instance()->add(Log::NOTICE, '555 режим ТЕСТ, команды на открытие ворот НЕ передаются'); 
-		}
-	
-	
-	$t2=microtime(1);
-	
-
-		//$this->response->status(200);
-		
-		//сохранение файла с фотографией машины
-		
-		
-		Model::factory('mpt')->savePhoto( Arr::get($input_data, 'plate'), base64_decode(Arr::get($input_data, 'image'))); //debug
-		
-		//Log::instance()->add(Log::NOTICE, "273 Сохранение фото ". Arr::get($input_data, 'plate').', сохранено за '.(microtime(1) - $t2));
-		
-		
-	Log::instance()->add(Log::NOTICE, "723 Stop cvs cam=".$cvs->cam.", cvs=". Arr::get($input_data, 'id').', grz='.$cvs->grz.', code_validation='.$cvs->code_validation.', total_time='.number_format((microtime(1) - $t1), 3));	
-	//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
-		return;
-	}
 
 
 	/**20.07/2025
@@ -1108,13 +882,14 @@ Log::instance()->add(Log::NOTICE, '665-50 debug :id :data', array(':data'=>numbe
 		*/
 		public function setMutexIdentifier($id_gate, $identifier)
 		{
-			if (Cache::instance()->get('mutex_'. $id_gate))//если этот кеш есть, значит он уже обрабатывается. Обработка полученного идентификатора надо прекращать.
+			Log::instance()->add(Log::NOTICE, '1110-10 debug :data', array(':data'=>Cache::instance()->get('mutex_'.$id_gate)));
+			if (Cache::instance()->get('mutex_'. $id_gate))//если true, значит он уже обрабатывается. Обработка полученного идентификатора надо прекращать.
 			{
-				return false;
-			} else {
-				//Cache::instance()->del('id_gate_'. $id_gate);
-				Cache::instance()->set('mutex_'. $id_gate, $identifier, Setting::get('delay_cvs', 20));
 				return true;
+			} else {
+				Cache::instance()->delete('mutex_'. $id_gate);
+				Cache::instance()->set('mutex_'. $id_gate, $identifier, Setting::get('delay_cvs', 20));
+				return false;
 				
 			}
 			
@@ -1128,8 +903,8 @@ Log::instance()->add(Log::NOTICE, '665-50 debug :id :data', array(':data'=>numbe
 		*/
 		public function getMutexIdentifier($id_gate)
 		{
-			Log::instance()->add(Log::NOTICE, '1127 mutex_'. $id_gate);	
-			Log::instance()->add(Log::NOTICE, '1128 mutex_'. $id_gate.' '. Cache::instance()->get('mutex_'. $id_gate));	
+			// Log::instance()->add(Log::NOTICE, '1127 mutex_'. $id_gate);	
+			// Log::instance()->add(Log::NOTICE, '1128 mutex_'. $id_gate.' '. Cache::instance()->get('mutex_'. $id_gate));	
 			return Cache::instance()->get('mutex_'. $id_gate);
 			
 		}
