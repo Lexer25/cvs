@@ -1,0 +1,81 @@
+
+Warning: PHP Startup: Unable to load dynamic library '\xampp\php\ext\php_pdo_firebird.dll' - Не найдена указанная процедура.
+ in Unknown on line 0
+PHPUnit 3.7.21 by Sebastian Bergmann.
+
+Configuration read from C:\xampp\htdocs\city\application\tests\phpunit.xml
+
+..[41;37mF[0m
+
+Time: 0 seconds, Memory: 2.50Mb
+
+There was 1 failure:
+
+1) qq22Test::testStrLenttt
+Failed asserting that 8 matches expected 7.
+
+C:\xampp\htdocs\city\application\tests\Classes\qq22Test.php:10
+
+[37;41m[2KFAILURES!
+[0m[37;41m[2KTests: 3, Assertions: 4, Failures: 1.
+[0m[2K
+Warning: PHP Startup: Unable to load dynamic library '\xampp\php\ext\php_pdo_firebird.dll' - Не найдена указанная процедура.
+ in Unknown on line 0
+PHPUnit 3.7.21 by Sebastian Bergmann.
+
+Configuration read from C:\xampp\htdocs\city\application\tests\phpunit.xml
+
+..[41;37mF[0m
+
+Time: 0 seconds, Memory: 2.50Mb
+
+There was 1 failure:
+
+1) qq22Test::testStrLenttt
+Failed asserting that 8 matches expected 7.
+
+C:\xampp\htdocs\city\application\tests\Classes\qq22Test.php:10
+
+[37;41m[2KFAILURES!
+[0m[37;41m[2KTests: 3, Assertions: 4, Failures: 1.
+[0m[2K
+Warning: PHP Startup: Unable to load dynamic library '\xampp\php\ext\php_pdo_firebird.dll' - Не найдена указанная процедура.
+ in Unknown on line 0
+PHPUnit 3.7.21 by Sebastian Bergmann.
+
+Configuration read from C:\xampp\htdocs\city\application\tests\phpunit.xml
+
+..[31;1mE[0m
+
+Time: 0 seconds, Memory: 2.50Mb
+
+There was 1 error:
+
+1) Controller_qq22Test::testBBB with data set #0 (6, 2)
+ErrorException: session_start(): Cannot send session cookie - headers already sent by (output started at C:\xampp\php\pear\PHPUnit\Util\Printer.php:172)
+
+C:\xampp\htdocs\city\application\tests\Classes\qq22Test.php:18
+
+[37;41m[2KFAILURES!
+[0m[37;41m[2KTests: 3, Assertions: 2, Errors: 1.
+[0m[2K
+Warning: PHP Startup: Unable to load dynamic library '\xampp\php\ext\php_pdo_firebird.dll' - Не найдена указанная процедура.
+ in Unknown on line 0
+PHPUnit 3.7.21 by Sebastian Bergmann.
+
+Configuration read from C:\xampp\htdocs\city\application\tests\phpunit.xml
+
+..[31;1mE[0m
+
+Time: 0 seconds, Memory: 2.50Mb
+
+There was 1 error:
+
+1) Controller_qq22Test::testBBB with data set #0 (6, 2)
+ErrorException: session_start(): Cannot send session cookie - headers already sent by (output started at C:\xampp\php\pear\PHPUnit\Util\Printer.php:172)
+
+C:\xampp\htdocs\city\application\tests\Classes\qq22Test.php:18
+
+[37;41m[2KFAILURES!
+[0m[37;41m[2KTests: 3, Assertions: 2, Errors: 1.
+[0m[2K

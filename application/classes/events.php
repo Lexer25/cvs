@@ -28,6 +28,7 @@ class events {
 				const ACCESSDENIED=65;
 				const WOK=6;//двойной въезд
 				const OK=50;
+				const UNKNOWNRESULT=-1;
 	
 	public function addEvent()//добавление события в таблицу HL_EVENTS
 	{
@@ -36,11 +37,19 @@ class events {
 			case self::DISABLEDCARD:
 			case self::CARDEXPIRED:
 			case self::DISABLEDUSER:
+			case self::WOK:
+			case 8:
+			
 			$_data=array(
 				'eventCode'=>$this->eventCode,
 				'grz='=>$this->grz,
 				'id_gate='=>$this->id_gate,
 				);
+			break;
+			
+			default:
+			
+				Log::instance()->add(Log::NOTICE, '49 попытка записать событий с неизвестным кодом. Данные события :data', array(':data'=>Debug::vars($this)));
 			break;
 			
 			
@@ -72,14 +81,14 @@ class events {
 			VALUES (:EVENT_CODE,:IS_ENTER,:RUBI_CARD,:PARK_CARD,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE)', $_data);
 			
 		//echo Debug::vars('78',$_data, $sql);exit;	
-		Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
+		//Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
 		try
 			{
 				$query = DB::query(Database::INSERT, iconv('UTF-8', 'CP1251',$sql))
 				->execute(Database::instance('fb'));
 				
 			} catch (Exception $e) {
-				Log::instance()->add(Log::DEBUG, 'Line 98 '. $e->getMessage());
+				//Log::instance()->add(Log::DEBUG, 'Line 98 '. $e->getMessage());
 							
 			}
 		

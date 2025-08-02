@@ -14,6 +14,26 @@ class insideList {
 							
 			
 	
+	/**очистка таблицы hl_inside
+	*
+	*/
+	public static function clearInside()
+	{
+		$sql='delete from hl_inside';
+		try
+			{
+				$query = DB::query(Database::DELETE, $sql)
+				->execute(Database::instance('fb'));
+				return 0;
+				
+			} catch (Exception $e) {
+				//Log::instance()->add(Log::DEBUG, 'Line 30 '. $e->getMessage());
+				return 1;
+							
+			}
+		
+	}
+	
 	public function addToInside()//добавление события в таблицу HL_EVENTS
 	{
 	
@@ -36,7 +56,7 @@ class insideList {
 				->execute(Database::instance('fb'));
 				
 			} catch (Exception $e) {
-				Log::instance()->add(Log::DEBUG, 'Line 39 '. $e->getMessage());
+				//Log::instance()->add(Log::DEBUG, 'Line 59 '. $e->getMessage());
 							
 			}
 		
@@ -60,7 +80,7 @@ class insideList {
 			{
 				$query = DB::query(Database::DELETE, iconv('UTF-8', 'CP1251',$sql))
 				->execute(Database::instance('fb'));
-				Log::instance()->add(Log::DEBUG, 'Line 78 people :id_pep из паркинга :id_parking удалени успешно. ', array(':id_pep'=>$this->id_pep, ':id_parking'=>$this->id_parking));
+				//Log::instance()->add(Log::DEBUG, 'Line 78 people :id_pep из паркинга :id_parking удалени успешно. ', array(':id_pep'=>$this->id_pep, ':id_parking'=>$this->id_parking));
 				
 			} catch (Exception $e) {
 				Log::instance()->add(Log::DEBUG, 'Line 78 '. $e->getMessage());

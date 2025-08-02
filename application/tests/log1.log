@@ -1,0 +1,13 @@
+
+Warning: PHP Startup: Unable to load dynamic library '\xampp\php\ext\php_pdo_firebird.dll' - Не найдена указанная процедура.
+ in Unknown on line 0
+PHPUnit 3.7.21 by Sebastian Bergmann.
+
+Configuration read from C:\xampp\htdocs\city\application\tests\phpunit.xml
+
+.....
+
+Time: 0 seconds, Memory: 2.50Mb
+
+[30;42m[2KOK (5 tests, 5 assertions)
+[0m[2K

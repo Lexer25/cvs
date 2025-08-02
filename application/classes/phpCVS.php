@@ -126,7 +126,7 @@ public function getMessForIdle()
 
 /** 19.07.2025
 	*Процесс валидации ГРЗ и UHF в указанной точке проезда средствами php (не процедура в БД СКУД).
-	*@param id_parking - id парковочной площадки
+	*@param garage - id гаража
 	*@param is_enter - true - въезд, false - выезд
 	
 	*@return void
@@ -134,8 +134,6 @@ public function getMessForIdle()
 
 	public function checkPHPin(Garage $garage)
     {
-
-
 	//Проверяю направление проезда.
 
 	if($this->isEnter ){
@@ -143,78 +141,69 @@ public function getMessForIdle()
 	//т.к. гараж может иметь на разых площадках, то и количество свободных мест надо считать для каждой площадки.
 			//echo Debug::vars('142',$garage->getPlaceCount($cvs->id_parking));
 			//echo Debug::vars('143',$garage->getPlaceCountUccuped($cvs->id_parking));
-		Log::instance()->add(Log::NOTICE, '229 всего мест :count, занято :occuped.',
+		Log::instance()->add(Log::NOTICE, '144 всего мест :count, занято :occuped.',
 			array(
 				':count'=>$garage->getPlaceCount($this->id_parking),
 				':occuped'=>$garage->getPlaceCountUccuped($this->id_parking)
 				));
  		 if($garage->getPlaceCount($this->id_parking) - $garage->getPlaceCountUccuped($this->id_parking) >0){
-			//свободные мест есть, можно запускать.
-		//*добавить событие  в hl_events
-
-		// $event->eventCode=events::OK;
-		// $event->grz=$grz;
-		// $event->addEventRow();
-		//*добавить в hl_inside номер id_pep и дату. Номер ГРЗ идет как вспомогательный параметр, чтобы можно было понять по какому ГРЗ был въезд.
-		//*давать команду на управление воротами: открыть, вывести надпись и т.п.
-			 echo Debug::vars('116 Можно заезжать!');
+			//свободные места есть, можно запускать.
 			 Log::instance()->add(Log::NOTICE, '238 мест хватает, въезд разрешен.', array(':data'=>'data'));
 			 return true;
 		 } else {
 			 //мест нет, не запускать.
 		//*добавить событие  в hl_events
 		//*дать команду на ворота: что вывести табло.
-			 echo Debug::vars('121 Мест нет');
-Log::instance()->add(Log::NOTICE, '245 мест нет :data', array(':data'=>1));
+			
+				Log::instance()->add(Log::NOTICE, '245 мест нет :data', array(':data'=>1));
 			 return false;
 		 }
-		//проверяю наличие свободных мест.
-		//теперь по номеру видекамеры определяю параметры гаража, куда пытается заехать автомобиль.
-
+	
 	} else { //выезд. При выезде надо проверять: разрешен ли выезд, если ГРЗ нет на паркове.
-	//алгоритм зависит от параметра учета парковки.
-		//	$event->eventCode=events::OK;
+	// алгоритм зависит от параметра учета парковки.
+			// $event->eventCode=events::OK;
 		// $event->grz=$grz;
 		// $event->addEventRow();
 		// echo Debug::vars('165 выезд!!!');
 		// есть ли ГРЗ и id_pep в таблице hl_inside?
-		//если есть, то удалить оттуда.
-		//а если нет, то удалить кого-нибудь другого...
-			if($identifier->checkInParking($this->id_parking))
-			{
-	//* удалить идентификатор из таблицы hl_inside
-	//*	сделать запись в журнале событий
-	//* открыть ворота
-				echo Debug::vars('174 Был на территории, можно выезжать!');
-				return true;
-			} else {
-				//* надо хоть кого-то удалить
-				//* сделать запись в журнале событий о нарушении порядка
-				//* сделать запись в журнале событий о выезде
-				//*открыть ворота
-				echo Debug::vars('180 на территории не был, пытается выехать. что делать?');
-				Log::instance()->add(Log::NOTICE, ' на территории не был, пытается выехать. что делать?', array(':data'=>1));
+		// если есть, то удалить оттуда.
+		// а если нет, то удалить кого-нибудь другого...
+		//	if($identifier->checkInParking($this->id_parking))
+		//	{
+	// * удалить идентификатор из таблицы hl_inside
+	// *	сделать запись в журнале событий
+	// * открыть ворота
+		//		echo Debug::vars('174 Был на территории, можно выезжать!');
+		//		return true;
+		//	} else {
+				// * надо хоть кого-то удалить
+				// * сделать запись в журнале событий о нарушении порядка
+				// * сделать запись в журнале событий о выезде
+				// *открыть ворота
+		//		echo Debug::vars('180 на территории не был, пытается выехать. что делать?');
+		//		Log::instance()->add(Log::NOTICE, ' на территории не был, пытается выехать. что делать?', array(':data'=>1));
 
-			}
-
-
+		}
 	}
-	return true;
-    }
+	
+
 
 	/**20.07.2025 проверка разрешения на выезд
 	*
 	*
 	*/
+	
 	public function checkPHPout()
 	{
 		return true;
 	}
 
+
 	/**
 	*@input $garage->id_parking - список парковок, на которых расположены машиноместа гаража
 	*Функция позволяет определить "правльность" ворот: вдруг к чужим подъехал?
 	*/
+	
    public function checkAccess($listParking)
 	{
 
@@ -230,6 +219,7 @@ Log::instance()->add(Log::NOTICE, '245 мест нет :data', array(':data'=>1)
 	*@input $garage->id_parking - список парковок, на которых расположены машиноместа гаража
 	*Функция позволяет определить "правльность" ворот: вдруг к чужим подъехал?
 	*/
+	
    public function checkAccessForNonGarage($id_pep)
 	{
 
@@ -243,7 +233,7 @@ Log::instance()->add(Log::NOTICE, '245 мест нет :data', array(':data'=>1)
 			->execute(Database::instance('fb'))
 			->get('COUNT');
 			
-	if($query>0) return true;
+		if($query>0) return true;
 	return false;
 
 		
@@ -251,3 +241,5 @@ Log::instance()->add(Log::NOTICE, '245 мест нет :data', array(':data'=>1)
 
 
 }
+
+
