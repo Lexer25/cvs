@@ -518,6 +518,9 @@ where hlp.box_ip=\''.$ip.'\'';
 		
 	}
 	
-
+	public function common(Identifier $identifier, phpCVS $cvs)
+	{
+		
+	}
 	
 }
