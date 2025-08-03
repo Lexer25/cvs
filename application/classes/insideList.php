@@ -34,10 +34,10 @@ class insideList {
 		
 	}
 	
-	public function addToInside()//добавление события в таблицу HL_EVENTS
+	public function addToInside()//добавление события в таблицу HL_INSIDE
 	{
 	
-	//$this->delFromInside();
+	$this->delFromInside();// удаляю запись для этого id_pep. В результате после добавления новой записи будет обновлен номер идентификатора
 	$_data=array(
 				':ENTERTIME'=>'\'now\'',
 				':ID_CARD'=>'\''.$this->id_card.'\'',
@@ -48,8 +48,6 @@ class insideList {
 			
 	
 	$sql=__('INSERT INTO HL_INSIDE (ENTERTIME,ID_CARD,ID_PEP,COUNTERID) VALUES (:ENTERTIME,:ID_CARD,:ID_PEP,:COUNTERID)', $_data);
-		
-	
 		try
 			{
 				$query = DB::query(Database::INSERT, iconv('UTF-8', 'CP1251',$sql))
@@ -75,7 +73,7 @@ class insideList {
 			);
 	
 		$sql=__('delete from hl_inside hli where hli.id_pep=:ID_PEP', $_data);
-		Log::instance()->add(Log::NOTICE, '71  :data', array(':data'=>$sql));	//exit;
+		//Log::instance()->add(Log::NOTICE, '71  :data', array(':data'=>$sql));	//exit;
 		try
 			{
 				$query = DB::query(Database::DELETE, iconv('UTF-8', 'CP1251',$sql))

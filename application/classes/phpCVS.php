@@ -141,14 +141,14 @@ public function getMessForIdle()
 	//т.к. гараж может иметь на разых площадках, то и количество свободных мест надо считать для каждой площадки.
 			//echo Debug::vars('142',$garage->getPlaceCount($cvs->id_parking));
 			//echo Debug::vars('143',$garage->getPlaceCountUccuped($cvs->id_parking));
-		Log::instance()->add(Log::NOTICE, '144 всего мест :count, занято :occuped.',
+		Log::instance()->add(Log::NOTICE, '144 -- всего мест :count, занято :occuped.',
 			array(
 				':count'=>$garage->getPlaceCount($this->id_parking),
 				':occuped'=>$garage->getPlaceCountUccuped($this->id_parking)
 				));
  		 if($garage->getPlaceCount($this->id_parking) - $garage->getPlaceCountUccuped($this->id_parking) >0){
 			//свободные места есть, можно запускать.
-			 Log::instance()->add(Log::NOTICE, '238 мест хватает, въезд разрешен.', array(':data'=>'data'));
+			 Log::instance()->add(Log::NOTICE, '238 -- мест хватает, въезд разрешен.', array(':data'=>'data'));
 			 return true;
 		 } else {
 			 //мест нет, не запускать.

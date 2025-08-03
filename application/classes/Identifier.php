@@ -37,9 +37,9 @@ class Identifier
 			->execute(Database::instance('fb'))
 			->as_array()
 			);
-		
+		$this->id=$id; 
 		if(is_numeric(Arr::get($query, 'ID_PEP')))	{
-					$this->id=$id; 
+					
 					$this->status=self::VALID; 
 					$this->id_garage=Arr::get($query, 'ID_GARAGE');
 					$this->id_pep=Arr::get($query, 'ID_PEP');

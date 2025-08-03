@@ -114,14 +114,14 @@ where hlp.box_ip=\''.$ip.'\'';
 		//sleep(5); //имитация задержки в период проверки при работе с рабочей базой данных
 		$parking = new Parking($cvs->id_parking);
 		//Log::instance()->add(Log::NOTICE, '924 parking :data', array(':data'=>Debug::vars($parking)));
-		Log::instance()->add(Log::NOTICE, '614 Начал работу анализатора для key=:key ворота :id_gate', array(':key'=>$identifier->id, ':id_gate'=>$cvs->id_gate));
+		Log::instance()->add(Log::NOTICE, '614 :key Начал работу анализатора для key=:key ворота :id_gate', array(':key'=>$identifier->id, ':id_gate'=>$cvs->id_gate));
 		//начинаю анализ
 		//начинаю проверку полученного идентификатора. grz
 		//$identifier=new Identifier($grz);
 		//Log::instance()->add(Log::NOTICE, '776 Identifier'. Debug::vars($identifier));
 		if(!$identifier->status==Identifier::VALID){
 			//зафиксировать в журнале отказ от дальнейшей обработки
-			Log::instance()->add(Log::NOTICE, '675 identifier :key не валидна status=:status. Завершаю обработку.',
+			Log::instance()->add(Log::NOTICE, '675 :key identifier :key не валидна status=:status. Завершаю обработку.',
 				array(
 					':key'=>$identifier->id,
 					':status'=>$identifier->status
@@ -129,7 +129,7 @@ where hlp.box_ip=\''.$ip.'\'';
 			return Events::UNKNOWNCARD;
 			//exit;
 		} 
-		Log::instance()->add(Log::NOTICE, '132 identifier :key валидна status=:status, ворота :id_gate. Продолжаю обработку.',
+		Log::instance()->add(Log::NOTICE, '132 :key identifier :key валидна status=:status, ворота :id_gate. Продолжаю обработку.',
 				array(
 					':key'=>$identifier->id,
 					':status'=>$identifier->status,
@@ -187,7 +187,7 @@ where hlp.box_ip=\''.$ip.'\'';
 					':garage'=>Debug::vars($garage)
 					));		 */
 		
-		Log::instance()->add(Log::NOTICE, '190 identifier :key имеет гараж :garage.',
+		Log::instance()->add(Log::NOTICE, '190 :key identifier :key имеет гараж :garage.',
 				array(
 					':key'=>$identifier->id,
 					':garage'=>$identifier->id_garage
@@ -213,7 +213,7 @@ where hlp.box_ip=\''.$ip.'\'';
 				//echo Debug::vars('134 ошибся воротами!');
 				//exit;
 			} 
-				Log::instance()->add(Log::NOTICE, '216 identifier :key подъехала к своим воротам.',
+				Log::instance()->add(Log::NOTICE, '216 :key identifier :key подъехала к своим воротам.',
 				array(
 					':key'=>$identifier->id,
 					':status'=>$identifier->status
@@ -318,24 +318,22 @@ where hlp.box_ip=\''.$ip.'\'';
 		if(in_array($cvs->id_gate,$reverseList))
 		{
 			$cvs->mode = 2;//если режим работы Реверсивные ворота, то щелакаю обоими реле
-			Log::instance()->add(Log::NOTICE, '215 реверсивный режим для ворот '.$cvs->id_gate.'. открываю оба реле'); 
+			Log::instance()->add(Log::NOTICE, '215 :key реверсивный режим для ворот '.$cvs->id_gate.'. открываю оба реле', array(':key'=>$identifier->id)); 
 		} else {
 			$cvs->mode = $cvs->ch;//если режим НЕ реверсивный, то режим равен номеру канала
 			Log::instance()->add(Log::NOTICE, '219 Не реверсивный режим. открываю реле '. $cvs->ch); 
 		}
 	
-		//Log::instance()->add(Log::NOTICE, '220-1'.Debug::vars($cvs)); 
-	
-		Log::instance()->add(Log::NOTICE, '452-0 debug :data', array(':data'=>(microtime(true) - $t1)));
+		
 		
 		//===============================================================
 		
 		//записываю событие в журнал
-		$events= new Events();
+		/* $events= new Events();
 		$events->eventCode=$cvs->code_validation;
 		$events->grz=$identifier->id;
 		$events->id_gate=$cvs->id_gate;
-		$events->addEventRow();
+		$events->addEventRow(); */
 
 		//Этап 5: управление внешими стройствами по результатам валидации
 		
@@ -348,7 +346,7 @@ where hlp.box_ip=\''.$ip.'\'';
 		//Log::instance()->add(Log::NOTICE, '256-256  '.Debug::vars($cvs)); 
 		
 		//Log::instance()->add(Log::NOTICE, '220-2'.Debug::vars($cvs)); 
-		Log::instance()->add(Log::NOTICE, '452-10 debug :data', array(':data'=>(microtime(true) - $t1)));
+		//Log::instance()->add(Log::NOTICE, '452-10 debug :data', array(':data'=>(microtime(true) - $t1)));
 		
 		 switch($cvs->code_validation){
 		
@@ -358,12 +356,13 @@ where hlp.box_ip=\''.$ip.'\'';
 				$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
 				//Log::instance()->add(Log::NOTICE, '307-307  '.Debug::vars($mpt));
 				if(!Arr::get($config, 'debug')) {
-						$mpt->openGate($cvs->mode);// даю команду открыть ворота
+						$mpt->openGate($cvs->mode);// если режим отладки НЕ включен, то даю команду открыть ворота
 				} else {
 					$mpt->result ='OK';
 				}			
-				$i=0;
-					while($mpt->result !='OK' AND $i<10)// делать до 10 попыток
+				//============= даю в цикле команды на открытие ворот. Цикл сделан на случай потери связи, и был актуален для UDP
+					$i=0;
+					while($mpt->result !='OK' AND $i<2)// делать до 2 попыток
 					{
 						Log::instance()->add(Log::DEBUG, '155 Команда открыть ворота '.$cvs->box_ip.':'.$cvs->box_port.' выполнена неудачно: '.$mpt->result.' desc '.$mpt->edesc.'. timestamp '.microtime(true).'. Команда Открыть ворота повторяется еще раз, попытка '.$i.' time_from_start='.number_format((microtime(1) - $t1), 3));
 						if(!Arr::get($config, 'debug')) $mpt->openGate($cvs->mode);// открыть ворота
@@ -372,10 +371,11 @@ where hlp.box_ip=\''.$ip.'\'';
 					//Log::instance()->add(Log::NOTICE, '004_150 Событие 50. Результат выполнения команды openGate '.$cvs->box_ip.':'.$cvs->box_port.' result='.$mpt->result.', desc='.$mpt->edesc.'  после '. $i .' попыток time_from_start='.number_format((microtime(1) - $t1), 3));		
 				if($mpt->result == 'Err') 
 				{
-					//Log::instance()->add(Log::NOTICE, '138 Событие 50. Не смог открыть ворота в течении 10 попыток. Видеокамера '.$cvs->cam.' ('.$direct.') ГРЗ '.$identifier->id.' контролер IP='.$cvs->box_ip.':'.$cvs->box_port.' Режим шлюза '.$cvs->mode.' Ответ '.$mpt->result.' edesc '.$mpt->edesc);		
+					Log::instance()->add(Log::NOTICE, '138 Событие 50. Не смог открыть ворота в течении 10 попыток. Видеокамера '.$cvs->cam.' ('.$direct.') ГРЗ '.$identifier->id.' контролер IP='.$cvs->box_ip.':'.$cvs->box_port.' Режим шлюза '.$cvs->mode.' Ответ '.$mpt->result.' edesc '.$mpt->edesc);		
 				} else 
 				{
-					//Log::instance()->add(Log::NOTICE, '004_64 Событие 50. Ответ контроллера после повторной команды '.$mpt->result.' edesc '.$mpt->edesc.'  после '. $i .' попыток.');	
+					Log::instance()->add(Log::NOTICE, '004_64 Событие 50. Ответ контроллера после повторной команды '.$mpt->result.' edesc '.$mpt->edesc.'  после '. $i .' попыток.');	
+					
 						//Ворота открылись успешно, надо добавлять ГРЗ в таблицу inside в зависиммочти от направления движения
 						
 						$inside= new insideList;
@@ -385,19 +385,24 @@ where hlp.box_ip=\''.$ip.'\'';
 						
 						if($cvs->isEnter==1) {// въезд
 							$inside->addToInside();
+							Log::instance()->add(Log::NOTICE, '378 добавляю в HL_inside :key, ', array(':key'=> $inside->id_card,':id_pep'=> $inside->id_pep,':id_parking'=> $inside->id_parking));
 						} else { //это выезд
 							//обработка для С гаражом и Без гаража - разная.
 							//без гаража - надо только удалить этого id_pep из таблицы inside
 							//а если с гаражом, то надо проверить присутсвие, и если пипел не на парковке, то удалять кого-нибудь.
 							
+					
 							if(is_null($identifier->id_garage)) //если нет гаража
 							{
+									Log::instance()->add(Log::NOTICE, '397 :key это выезд без гаража', array(':key'=> $inside->id_card));	
 									$inside->delFromInside();//если на парковке, то удаляю пипла по его id_pep
 							} else {//если есть гараж
-								if(!$identifier->checkInParking($cvs->id_parking))
+								if($identifier->checkInParking($cvs->id_parking))
 								{
+									Log::instance()->add(Log::NOTICE, '397 :key НА парковке', array(':key'=> $inside->id_card));
 									$inside->delFromInside();//если на парковке, то удаляю пипла по его id_pep
 								} else {
+									Log::instance()->add(Log::NOTICE, '397 :key НЕ на парковке', array(':key'=> $inside->id_card));
 										Log::instance()->add(Log::NOTICE, '423-0 Выехал Удаляю grz :grz id_pep=:id_pep id_garage=:id_garage id_parking = :id_parking, которого не было на стоянке. Удаляю кого нибудь из этого гаража на этой парковке.', array(
 											':grz'=>$identifier->id,
 											':id_pep'=>$identifier->id_pep,
@@ -405,8 +410,8 @@ where hlp.box_ip=\''.$ip.'\'';
 											':id_parking'=>$cvs->id_parking,
 											
 											));
-										Model::factory('cvss')->delAnyIdPepOnPlace($identifier->id_garage, $cvs->id_parking);
-										//$inside->delFromInside();//если на парковке, то удаляю пипла по его id_pep
+										$this->delAnyIdPepOnPlace($identifier->id_garage, $cvs->id_parking);//удаляю кого-нибудь
+
 									}
 							}
 						}
