@@ -66,16 +66,9 @@ class Controller_Dashboard extends Controller{
 		$mess='Модуль интеграции системы распознавания государственных регистрационных знаков CVS и СКУД Артонит Сити.<br>';
 		$mess.='www.artsec.ru<br>';
 		$mess.='2022-'.date("Y").'<br>';
+		$mess.='Ver:'.Kohana::$config->load('config')->ver.'<br>';
 		$mess.=HTML::anchor('guide', 'guide');
 		$this->response->body($mess);
-		
-		//получил номер идентфикатора. Проверяю: надо ли с ним вообще работать?
-		//Входные данные:
-		$grz='1922384';
-		$id_cam=3;//3.2 выезд
-	//$id_cam=1;//3.2 въезд
-	echo Debug::vars('77', Setting::get('delay_cvs', 122));
-		$gate=Model_cvss::getGateFromCam($id_cam);//это ворота, через которые пытается проехат ГРЗ
 		
 			
 		
