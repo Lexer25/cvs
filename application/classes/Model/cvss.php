@@ -83,6 +83,15 @@ where hlp.box_ip=\''.$ip.'\'';
 		$_id_pep = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->get('ID_PEP');
+		
+
+		
+		if(is_null($_id_pep))
+		{
+			Log::instance()->add(Log::DEBUG, 'Line 88 при выезде удалять некого. id_pep = :_id_pep. ', array(':_id_pep'=>Debug::vars($_id_pep)));
+			return;
+
+		}			
 			
 		$sql='delete from hl_inside hli
 			where hli.id_pep='.$_id_pep;
@@ -317,8 +326,26 @@ where hlp.box_ip=\''.$ip.'\'';
 		
 		if(in_array($cvs->id_gate,$reverseList))
 		{
-			$cvs->mode = 2;//если режим работы Реверсивные ворота, то щелакаю обоими реле
+			$cvs->mode = 2;//если режим работы Реверсивные ворота, то щелкаю обоими реле
 			Log::instance()->add(Log::NOTICE, '215 :key реверсивный режим для ворот '.$cvs->id_gate.'. открываю оба реле', array(':key'=>$identifier->id)); 
+			//блокировка противоположного въезда на некоторое время, чтобы не "поймать" выезжающий UHF или ГРЗ
+			foreach($reverseList as $key=>$value)
+			{
+				
+				Log::instance()->add(Log::DEBUG, 'Line 335 блокировка ворот отладка :_dd. ', array(':_dd'=>Debug::vars($reverseList, $key, $value, $cvs->id_gate, ($cvs->id_gate != $value))));
+				if ($cvs->id_gate != $value) 
+				{
+					Log::instance()->add(Log::DEBUG, 'Line 338 блокировка   ворот :id_gate gateBlock_:id_gate включена. ', array(':id_gate'=>$value));
+				
+					Cache::instance()->set('gateBlock_'.$value, array('name'=>'gateBlock_'.$value, 'id_gate_reverse'=>$value), Setting::get('delay_cvs', 120));//запрещаю проезд через другие ворота из списка реверсивных
+				
+				} else {//пока там две записи - будет работать нормально, будет запрещен въезд только в одни - противоположные - ворота
+					Log::instance()->add(Log::DEBUG, 'Line 343 блокировка   ворот :id_gate НЕ включена. ', array(':id_gate'=>$value));
+				}
+				
+			}
+			
+			
 		} else {
 			$cvs->mode = $cvs->ch;//если режим НЕ реверсивный, то режим равен номеру канала
 			Log::instance()->add(Log::NOTICE, '219 Не реверсивный режим. открываю реле '. $cvs->ch); 
@@ -328,12 +355,7 @@ where hlp.box_ip=\''.$ip.'\'';
 		
 		//===============================================================
 		
-		//записываю событие в журнал
-		/* $events= new Events();
-		$events->eventCode=$cvs->code_validation;
-		$events->grz=$identifier->id;
-		$events->id_gate=$cvs->id_gate;
-		$events->addEventRow(); */
+		
 
 		//Этап 5: управление внешими стройствами по результатам валидации
 		
