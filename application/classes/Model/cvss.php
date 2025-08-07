@@ -147,10 +147,7 @@ where hlp.box_ip=\''.$ip.'\'';
 		//Теперь надо собрать данные для дальнейшего анализа
 		
 		//надо иметь информацию и о воротах, откуда пришел ГРЗ
-			//Эта часть реализована в phpCVS
-			//$cvs=new phpCVS($id_gate);
-			//echo Debug::vars('106 информация о воротах', $cvs);
-			
+						
 			
 		//если у ГРЗ есть гараж, то надо делать только проверки свободных мест.
 		//если же гаража нет, то надо проверять категорию доступа.	
@@ -279,7 +276,8 @@ where hlp.box_ip=\''.$ip.'\'';
 		//если включен режим Тест (в конфигураторе, файл config), то надо возращать результат 145 (прохода в режиме Тест).
 		//результатом работы этого этапа является:
 		//коррекция сообщения для вывода на табло cvs->eventdMess 
-	   //Log::instance()->add(Log::NOTICE, '223 start gateControl '.Debug::vars($cvs)); 
+	   Log::instance()->add(Log::NOTICE, '223 start gateControl '.Debug::vars($cvs)); 
+	   Log::instance()->add(Log::NOTICE, '223- tablo :mess ', array(':mess'=>iconv('windows-1251','UTF-8', $cvs->eventdMess))); 
 		$t1=microtime(1);	
 	   $config = Kohana::$config->load('config');
 		if(Arr::get($config, 'testMode'))

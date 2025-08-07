@@ -278,9 +278,9 @@ class Controller_Dashboard extends Controller{
 			   Log::instance()->add(Log::NOTICE, '246 :key не найден мьютекс :name. Значит ворота не в режиме блокировки.', array(':key'=>$identifier->id, ':name'=>'gateBlock_'.$cvs->id_gate)); 
 			   //проверка: а не идут ли тут друг за другом идентификаторы, которые сразу попали в поле антенны?
 			  
-			  $_data=$this->getMutexIdentifier('gate_'.$cvs->id_gate); //получил список предыдущего обработанного UHF
+			  $_data=$this->getMutexIdentifier('gate_'.$cvs->id_gate); //получил номер предыдущего обработанного UHF, на КОТОРЫЙ УЖЕ ИМЕЕТСЯ РАЗРЕШЕНИЕ
 			//  Log::instance()->add(Log::NOTICE, '282 :key читаю мьютекс :name :data', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data))); 
-			    if(Arr::get($_data, 'id_gate') == $cvs->id_gate)
+			   if(Arr::get($_data, 'id_gate') == $cvs->id_gate)
 			   {
 				   Log::instance()->add(Log::NOTICE, '285 :key найден мьютекс :name :data', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 				  Log::instance()->add(Log::NOTICE, '263 :key уже выполняется обработка идентификатора :_key mutex :mutex на этих воротах :id_gate. Завершаю работу с кодом :code.  ', 
