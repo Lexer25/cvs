@@ -29,6 +29,8 @@ class events {
 				const WOK=6;//двойной въезд
 				const OK=50;
 				const UNKNOWNRESULT=-1;
+				const WOK_PEP=11;
+				const ANALYSERBUSY=7;
 	
 	public function addEvent()//добавление события в таблицу HL_EVENTS
 	{
@@ -80,7 +82,7 @@ class events {
 		$sql=__('INSERT INTO HL_EVENTS (EVENT_CODE,IS_ENTER,RUBI_CARD,PARK_CARD,GRZ,COMMENT,PHOTO,ID_PEP,ID_GATE)
 			VALUES (:EVENT_CODE,:IS_ENTER,:RUBI_CARD,:PARK_CARD,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE)', $_data);
 			
-		//echo Debug::vars('78',$_data, $sql);exit;	
+		//echo Debug::vars('78',$_data, $sql);
 		//Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
 		try
 			{

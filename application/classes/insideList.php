@@ -90,18 +90,49 @@ class insideList {
 		/**20.07.2025 проверка, что этот ГРЗ уже находится на этой парковке
 		*
 		*/
-		public static function checkGrzInParking($id_card)
+		public static function checkGrzInParking($identifier)
 		{
 			$_data=array(
 				//':ENTERTIME'=>'\'now\'',
-				':ID_CARD'=>'\''.$id_card.'\'',
-				//':ID_PEP'=>$this->id_pep,
+				':ID_CARD'=>'\''.$identifier->id.'\'',
+				':ID_PEP'=>$identifier->id_pep,
 				//':COUNTERID'=>$this->id_parking,
 				
 			);
 	
+		//$sql=__('select count(*) from hl_inside hli where hli.id_card=:ID_CARD or hli.id_pep=:ID_PEP', $_data);
 		$sql=__('select count(*) from hl_inside hli where hli.id_card=:ID_CARD', $_data);
 		//Log::instance()->add(Log::NOTICE, '71  :data', array(':data'=>$sql));	exit;
+		try
+			{
+				$query = DB::query(Database::SELECT, iconv('UTF-8', 'CP1251',$sql))
+				->execute(Database::instance('fb'))
+				->get('COUNT');
+				if($query > 0) return true;
+				return false;
+				
+			} catch (Exception $e) {
+				Log::instance()->add(Log::DEBUG, 'Line 96 '. $e->getMessage());
+							
+			}
+			
+		}
+		
+		/**20.07.2025 проверка, что этот id_pep уже находится на этой парковке
+		*
+		*/
+		public static function checkIdPepInParking($identifier)
+		{
+			$_data=array(
+				//':ENTERTIME'=>'\'now\'',
+				':ID_CARD'=>'\''.$identifier->id.'\'',
+				':ID_PEP'=>$identifier->id_pep,
+				//':COUNTERID'=>$this->id_parking,
+				
+			);
+	
+		$sql=__('select count(*) from hl_inside hli where hli.id_pep=:ID_PEP', $_data);
+			//Log::instance()->add(Log::NOTICE, '71  :data', array(':data'=>$sql));	exit;
 		try
 			{
 				$query = DB::query(Database::SELECT, iconv('UTF-8', 'CP1251',$sql))

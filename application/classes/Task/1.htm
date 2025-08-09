@@ -1,0 +1,316 @@
+
+C:\xampp\htdocs\cvs\application\classes\Task>set key=123456 
+
+C:\xampp\htdocs\cvs\application\classes\Task>set grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>set grz014=D014DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>set key014=3665363 
+
+C:\xampp\htdocs\cvs\application\classes\Task>set grz005=A005BB177 
+
+C:\xampp\htdocs\cvs\application\classes\Task>set key005=50500505 
+
+C:\xampp\htdocs\cvs\application\classes\Task>set keyT=11223344 
+
+C:\xampp\htdocs\cvs\application\classes\Task>C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=100 
+    
+C:\xampp\htdocs\cvs\application\classes\Task>rem "очищаю" гараж 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem тест 1-1: оба идентификатора принадлежа одному автомобилю. Перый идет UHF, затем ГРЗ. Ожидаю в таблице только один UHF (он был первым), занято только одно место. 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D014DD71 --id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem тест 1-2: оба идентификатора принадлежа одному автомобилю. Перый идет ГРЗ, затем UHF. ОЖидаю в таблице ГРЗ, т.к. он был первым, занято одно место. 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D014DD71 --id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem тест 1-3: оба идентификатора принадлежат одному автомобилю. Перый идет ГРЗ, затем UHF. UHF уже на парковке. Ожидаю событие Повторный въезд, в таблице будет ГРЗ 
+
+C:\xampp\htdocs\cvs\application\classes\Task>C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+    
+C:\xampp\htdocs\cvs\application\classes\Task>start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>ping localhost -n 8 
+
+����� ����⠬� � Buharov-HP [::1] � 32 ���⠬� ������:
+�⢥� �� ::1: �६�<1�� 
+�⢥� �� ::1: �६�<1�� 
+�⢥� �� ::1: �६�<1�� 
+�⢥� �� ::1: �६�<1�� 
+�⢥� �� ::1: �६�<1�� 
+�⢥� �� ::1: �६�<1�� 
+�⢥� �� ::1: �६�<1�� 
+�⢥� �� ::1: �६�<1�� 
+
+����⨪� Ping ��� ::1:
+    ����⮢: ��ࠢ���� = 8, ����祭� = 8, ����ﭮ = 0
+    (0% �����)
+�ਡ����⥫쭮� �६� �ਥ��-��।�� � ��:
+    �������쭮� = 0�ᥪ, ���ᨬ��쭮� = 0 �ᥪ, �।��� = 0 �ᥪ
+
+C:\xampp\htdocs\cvs\application\classes\Task>start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D014DD71 --id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>ping localhost -n 1			 
+
+����� ����⠬� � Buharov-HP [::1] � 32 ���⠬� ������:
+�⢥� �� ::1: �६�<1�� 
+
+����⨪� Ping ��� ::1:
+    ����⮢: ��ࠢ���� = 1, ����祭� = 1, ����ﭮ = 0
+    (0% �����)
+�ਡ����⥫쭮� �६� �ਥ��-��।�� � ��:
+    �������쭮� = 0�ᥪ, ���ᨬ��쭮� = 0 �ᥪ, �।��� = 0 �ᥪ
+
+C:\xampp\htdocs\cvs\application\classes\Task>start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF  --key=3665363	--id_gate=3	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem тест 1-4: оба идентификатора принадлежа одному автомобилю. Перый идет UHF, затем ГРЗ. ГРЗ уже на парковке. Ожидаю Повторный въезд, в таблице будет UHF 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D014DD71 --id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 8 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ==================== идентификаторы действительный и недействительный 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem оба идентификатора чужие. Ожидаю: события о неизвестных идентификаторов. 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem test 2-0 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM set key=123456 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM set grz=A111AA99 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM echo test 2-0 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM echo test 2-0-0 Поток неизвестных идентификаторов. Сначало ожидаю событие Неизвестная карта, а затем отказ из-за повторов 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem test 2-1 сперва неизвестный UHF,  затем известный ГРЗ. Ожидаю ГРЗ на парковке 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D014DD71 --id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 8 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D014DD71 --id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem тест 2-3. Два разных валидных UHF . Первый 014, затем 005. Ожидаю в списке 014. 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM echo test 2-3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem очищаю гаража 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 2 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=50500505 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 2 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem тест 2-4. Два разных валидных UHF . Первый 005, затем 014. Ожидаю в списке 005. 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM echo test 2-4 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem очищаю гаража 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=50500505	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 2 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 2 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --grz=D213DD71 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ============ имитация последовательного проезда ===================== 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem test 2-4 последовательный проезд одного и того же UHF на въезд и последующий выезд через ворота 3.1 Отказ в обработке повторного идентификатора 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM echo test 2-5 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem очищаю гаража 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ch=1 - въезд 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ch=0 - выезд 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=50500505	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 5 > null	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=50500505	--ch=0 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem test 2-6 последовательный проезд "чужого" UHF и "своего" UHF на въезд и последующий выезд через ворота 3.1. На парковке должен остаться 005 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM echo test 2-6 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem очищаю гаража 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ch=1 - въезд 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ch=0 - выезд 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 5 > null	 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=50500505	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ============================Счетчики тест серии 4 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem test 4-0 последовательно заежают машины . Ожидаю разрешение на въезд только первой, а остальные должны быть проигнорированы, т.к. очень часто ездят. 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem эта же ситуация будет происходит, когда в поле попадет сразу несколько UHF. Ожидаю на территории только первый UHF 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM echo test 4-0 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ch=1 - въезд 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ch=0 - выезд 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 > null 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=50500505	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 1 > null 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=11223344	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ============================Счетчики тест серии 5 ========================== 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem test 5-1 выезд UHF, которого нет в гараже 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM echo test 4-0 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ch=1 - въезд 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ch=0 - выезд 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 12 > null 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=50500505	--ch=0 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 12 > null 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=11223344	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem имитация въезда , затем выезда одной машины, и затем попытка въезд ее же (вроде как номер пойма при выезде 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage id_garage=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363	--ch=0 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 12 > null 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM ping localhost -n 5 > null 
+
+C:\xampp\htdocs\cvs\application\classes\Task>REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendGRZ --key=50500505 --cam=6 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=50500505 --ip=172.16.101.101	--id_gate=3 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem ping localhost -n 12 > null 
+
+C:\xampp\htdocs\cvs\application\classes\Task>rem start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=3665363 --ip=172.16.101.101	--ch=0 
+
+C:\xampp\htdocs\cvs\application\classes\Task>C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=101 
+    
