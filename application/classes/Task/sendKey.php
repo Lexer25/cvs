@@ -1,11 +1,11 @@
     <?php defined('SYSPATH') or die('No direct script access.');
  
-    class Task_sendUHF extends Minion_Task {
+    class Task_sendKey extends Minion_Task {
 		/**
 		
 		Тест для имитации обработки быстро пришедших идентификаторов.
 		номер идентификатора надо передавать в десятичной форме.
-		C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendUHF --key=123456
+		C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=123456 --id_gate=3
 		
 		*/
 		    protected $_options = array(

@@ -188,16 +188,7 @@ public function getMessForIdle()
 	
 
 
-	/**20.07.2025 проверка разрешения на выезд
-	*
-	*
-	*/
 	
-	public function checkPHPout()
-	{
-		return true;
-	}
-
 
 	/**
 	*@input $garage->id_parking - список парковок, на которых расположены машиноместа гаража

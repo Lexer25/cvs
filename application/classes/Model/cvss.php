@@ -123,7 +123,7 @@ where hlp.box_ip=\''.$ip.'\'';
 		//sleep(5); //имитация задержки в период проверки при работе с рабочей базой данных
 		$parking = new Parking($cvs->id_parking);
 		//Log::instance()->add(Log::NOTICE, '924 parking :data', array(':data'=>Debug::vars($parking)));
-		Log::instance()->add(Log::NOTICE, '614 :key Начал работу mainAnalysis для key=:key ворота :id_gate', array(':key'=>$identifier->id, ':id_gate'=>$cvs->id_gate));
+		Log::instance()->add(Log::NOTICE, '614 :key Начал работу mainAnalysis для key=:key ворота :id_gate isEnter :isEnter', array(':key'=>$identifier->id, ':id_gate'=>$cvs->id_gate, ':isEnter'=>$cvs->isEnter));
 		//начинаю анализ
 		//начинаю проверку полученного идентификатора. grz
 		//$identifier=new Identifier($grz);
@@ -263,14 +263,19 @@ where hlp.box_ip=\''.$ip.'\'';
 //ВЫЕЗД!!!
 				} else {//если выезд
 				
-					//if($cvs->checkPHPin($garage)){
-					if($cvs->checkPHPout($garage)){
+					if(insideList::checkGrzInParking($identifier))//ГРЗ на парковке
+					{ 
+						return Events::OK;			
+					} else {
+						return Events::OK_2;	
+					}						
+					/* if($cvs->checkPHPout($garage)){
 						//выезд разрешен
 						return Events::OK;
 					} else {
 						//выезд запрещен
 						return Events::ACCESSDENIED;	
-					}
+					} */
 				}
  	
 			
@@ -290,8 +295,8 @@ where hlp.box_ip=\''.$ip.'\'';
 		//если включен режим Тест (в конфигураторе, файл config), то надо возращать результат 145 (прохода в режиме Тест).
 		//результатом работы этого этапа является:
 		//коррекция сообщения для вывода на табло cvs->eventdMess 
-	   Log::instance()->add(Log::NOTICE, '223 start gateControl '.Debug::vars($cvs)); 
-	   Log::instance()->add(Log::NOTICE, '223- tablo :mess ', array(':mess'=>iconv('windows-1251','UTF-8', $cvs->eventdMess))); 
+	   Log::instance()->add(Log::NOTICE, '223 start gateControl ', array(':data'=>Debug::vars($cvs))); 
+	  // Log::instance()->add(Log::NOTICE, '223- tablo :mess ', array(':mess'=>iconv('windows-1251','UTF-8', $cvs->eventdMess))); 
 		$t1=microtime(1);	
 	   $config = Kohana::$config->load('config');
 		if(Arr::get($config, 'testMode'))
@@ -344,14 +349,13 @@ where hlp.box_ip=\''.$ip.'\'';
 			foreach($reverseList as $key=>$value)
 			{
 				
-				Log::instance()->add(Log::DEBUG, 'Line 335 блокировка ворот отладка :_dd. ', array(':_dd'=>Debug::vars($reverseList, $key, $value, $cvs->id_gate, ($cvs->id_gate != $value))));
+				//Log::instance()->add(Log::DEBUG, 'Line 335 блокировка ворот отладка :_dd. ', array(':_dd'=>Debug::vars($reverseList, $key, $value, $cvs->id_gate, ($cvs->id_gate != $value))));
 				if ($cvs->id_gate != $value) 
 				{
-					$delayReversRepeat=100;//время блокировки смежный ворот при выезде
+					$delayReversRepeat=Setting::get('delayReversRepeat', 120);//время блокировки смежный ворот при выезде
 					
-					Log::instance()->add(Log::DEBUG, 'Line 338 блокировка   ворот :id_gate gateBlock_:id_gate включена на время :delayReversRepeat. ', array(':id_gate'=>$value, ':delayReversRepeat'=>$delayReversRepeat));
+					Log::instance()->add(Log::DEBUG, 'Line 338 блокировка   ворот :id_gate gateBlock_:id_gate включена на время delayReversRepeat :delayReversRepeat секунд до :ct. ', array(':id_gate'=>$value, ':delayReversRepeat'=>$delayReversRepeat, ':ct'=>$this->calcTime($delayReversRepeat)));
 				
-					//Cache::instance()->set('gateBlock_'.$value, array('name'=>'gateBlock_'.$value, 'id_gate_reverse'=>$value), Setting::get('delay_cvs', 120));//запрещаю проезд через другие ворота из списка реверсивных
 					Cache::instance()->set('gateBlock_'.$value, array('name'=>'gateBlock_'.$value, 'id_gate_reverse'=>$value), $delayReversRepeat);//запрещаю проезд через другие ворота из списка реверсивных
 				
 				} else {//пока там две записи - будет работать нормально, будет запрещен въезд только в одни - противоположные - ворота
@@ -376,15 +380,7 @@ where hlp.box_ip=\''.$ip.'\'';
 		
 		$tablo=new phpTablo($cvs->tablo_ip, $cvs->tablo_port);//работа в режиме TCP 
 		
-			//сохраняю в семафор с номером табло номер обрабатываемого события
-		//Model::factory('mpt')->setSemafor('lastevent'.$cvs->cam, $cvs_event_id);
-		
-		//обработка кодов валидации
-		//Log::instance()->add(Log::NOTICE, '256-256  '.Debug::vars($cvs)); 
-		
-		//Log::instance()->add(Log::NOTICE, '220-2'.Debug::vars($cvs)); 
-		//Log::instance()->add(Log::NOTICE, '452-10 debug :data', array(':data'=>(microtime(true) - $t1)));
-		
+			
 		 switch($cvs->code_validation){
 		
 		
@@ -591,7 +587,7 @@ where hlp.box_ip=\''.$ip.'\'';
 				 //  Log::instance()->add(Log::NOTICE, '260 :key Первая отмета. Зафиксирую в мьютексе :name..', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
 					
 				   Cache::instance()->set('grz_'.$identifier->id, array('set_grz'=>1, 'key'=>$identifier->id), Setting::get('delay_cvs', 120));
-				   Log::instance()->add(Log::NOTICE, '267 :key нет мьютекс :name. Значит эту отметка не получали давно. Фиксирую в мьютексе и продолжаю обработку.', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
+				   Log::instance()->add(Log::NOTICE, '267 :key входной фильтр на дубликат номера. нет мьютекс :name. Значит эту отметка не получали давно. Фиксирую в мьютексе и продолжаю обработку.', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
 			  
 			   }
 			    
@@ -673,13 +669,13 @@ where hlp.box_ip=\''.$ip.'\'';
 					
 			}		
 			//} else {
-				Log::instance()->add(Log::NOTICE, '297 :key НЕ найден мьютекс :name :data. Значит на этих воротах идентификатор не обрабатывается в параллельном потоке.', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
+				Log::instance()->add(Log::NOTICE, '297 :key НЕ найден мьютекс :name. Значит на этих воротах идентификатор не обрабатывается в параллельном потоке.', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 				
 					Log::instance()->add(Log::NOTICE, '274 :key start mainAnalysis.', array(':key'=>$identifier->id));
 					//============== Главное! анализ!!! ==============================		
 						$result=Model::factory('cvss')->mainAnalysis($identifier,  $cvs);
 					//===================================================================
-						Log::instance()->add(Log::NOTICE, '292 :key stop mainAnalysis с результатаом :result.', array(':key'=>$identifier->id, ':result'=> $result));
+						Log::instance()->add(Log::NOTICE, '292 :key stop mainAnalysis с результатом :result.', array(':key'=>$identifier->id, ':result'=> $result));
 				   
 			 //  }
 			   
@@ -689,8 +685,6 @@ where hlp.box_ip=\''.$ip.'\'';
 			$cvs->getMessForEvent($result);//формирую текстовое сообщение для табло
 			
 			//сохраняю идентификатора в кеше для защиты от повторной обработки
-			//Cache::instance()->set('grz_'.$identifier->id, array('set_grz'=>1, 'key'=>$identifier->id), Setting::get('delay_cvs', 120)); // Этому ГРЗ проезд запрещен. Если он опять будет передан в это отрезок времени, то заблокируем его.
-			//Cache::instance()->set('door_'.$cvs->id_gate, $cvs->id_gate, Setting::get('delay_cvs', 120)); // Номер ворот, на которых начал обработку.
 					
 					
 			//делаю набор условий для последующей обработки. Если результат 50 (можно проезжать), то жду 30 секунд.
@@ -705,7 +699,7 @@ where hlp.box_ip=\''.$ip.'\'';
 							'id_garage'=>$identifier->id_garage,
 							);
 						$this->setMutexIdentifier('gate_'.$cvs->id_gate, $_data ); //если проезд разрешен, то фиксирую этот ГРЗ в мьютексе.
-						Log::instance()->add(Log::NOTICE, '206 :key валидация прошла успешно, записал в mutex :name значение :data', array(':key'=>$identifier->id,':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
+						//Log::instance()->add(Log::NOTICE, '206 :key валидация прошла успешно, записал в mutex :name значение :data', array(':key'=>$identifier->id,':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 													
 					break;
 					default:
@@ -719,36 +713,7 @@ where hlp.box_ip=\''.$ip.'\'';
 					':key'=>$identifier->id, 
 					':mutex'=>Debug::vars($this->getMutexIdentifier('gate_'.$cvs->id_gate))));	
 			 
-		/* 	if($this->isMutexFree('gate_'.$cvs->id_gate))
-			{
-				//ресурс свободен
-				//Log::instance()->add(Log::NOTICE, '322-0 mutex true свободен, продолжаю обработку.');	
-				Log::instance()->add(Log::NOTICE, '322-0 :key mutex true свободен, продолжаю обработку', array(':key'=>$identifier->id));
-				
-			} else {
-				$_data=$this->getMutexIdentifier('gate_'.$cvs->id_gate);//получил данные из кеша
-				Log::instance()->add(Log::NOTICE, '322-1 :key mutex false. занят, записано значение :data', array(':key'=>$identifier->id, ':data'=>Debug::vars($_data)));
-				if(Arr::get($_data, 'key') != $identifier->id) 
-				{
-					Log::instance()->add(Log::NOTICE, '324 :key mutex занят обработкой :mutex, прекращаю обработку.', array(':key'=>$identifier->id,  ':mutex'=>Debug::vars($this->getMutexIdentifier('gate_'.$cvs->id_gate))));	
-						
-					$events= new Events();
-					$events->eventCode=7;
-					$events->grz=$identifier->id;
-					$events->id_gate=$cvs->id_gate;
-					$events->addEventRow();
-					exit;
-				} else {
-					//номера обрабатываемых идентификаторов совпадают.
-					Log::instance()->add(Log::NOTICE, '343 :key значение mutex :mutex совпадает с номером обрабатываемого идентификатора, продолжаю обработку.', array(':key'=>$identifier->id,  ':mutex'=>Arr::get($this->getMutexIdentifier('gate_'.$cvs->id_gate), 'key')));	
-					//тут бы еще и ворота проверить. если ворота те же самые, то продолжаю обработку.
-					//если же ворота другие - прекращать обработку.
-					//if(Arr::get($_data, 'id_gate') != $cvs->id_gate) 
-					
-				}
-				
-				
-			} */
+	
 					
 			//мьтекс введен с целью недопустить фиксацию двух машиномест при получении сразу двух идентификаторов от одного автомобиля на въезде		
 			//в этот момент в мьютексе должен находится последний (по времени) валидный идентификатор
@@ -837,22 +802,19 @@ where hlp.box_ip=\''.$ip.'\'';
 		
 		public function resetMutexIdentifier($name)
 		{
-		/* 
-			Cache::instance()->delete($name);
-			return true; */
+		
 			//Удаление не требуется, т.к. кеш имеет срок жизни
 			
 		}
 		
-		/* public function checkMutexIdentifier($id_gate)
+		/**расчет времени. К текущему времени прибавляется указанное количество секунд и возвращается значение в текстововм формате.
+		*/
+		
+		public function calcTime($delay)
 		{
-			if (Cache::instance()->get('id_gate_'. $id_gate))//если этот кеш есть, значит он уже обрабатывается. Его надо удалить и заменить на вновь полученный идентификатор
-			{
-				
-				Log::instance()->add(Log::NOTICE, "1094 выполняется обработка ранее полученного идентификатора, процесс завершаю.");
-			}
+			return date('H:i:s', (time() + $delay));
 			
 		}
-		 */
+		
 	
 }

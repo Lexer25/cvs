@@ -140,7 +140,7 @@ class Controller_Dashboard extends Controller{
 						':key'=>Arr::get($post, 'key'),
 						':keyDec'=>hexdec(Arr::get($post, 'key')),
 						':gate'=>$id_gate,
-						':isEnter'=>$cvs->isEnter,
+						
 						)); 
 	
 						

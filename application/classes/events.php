@@ -28,6 +28,7 @@ class events {
 				const ACCESSDENIED=65;
 				const WOK=6;//двойной въезд
 				const OK=50;
+				const OK_2=14;//выезд, хотя на парковке не находится
 				const UNKNOWNRESULT=-1;
 				const WOK_PEP=11;
 				const ANALYSERBUSY=7;
