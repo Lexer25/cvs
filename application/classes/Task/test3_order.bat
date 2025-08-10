@@ -70,19 +70,21 @@ set key7THT3321=7THT3321
 rem тест 3.1-0 Паровозик. Все должны заехать.
 C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=100
 rem "очищаю" гаражи
-REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=1
-REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=2
-REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
-REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=5
-rem тест 1-1: по одному идентификатору от каждого гаража
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=1
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=2
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=5
+тест 1-1: по одному идентификатору от каждого гаража
 
-REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=3
-REM ping localhost -n 1
-REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key641176%	--id_gate=3
-REM ping localhost -n 1
-REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key11388024%	--id_gate=3
-REM ping localhost -n 1
-REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key22332233%	--id_gate=3
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=3
+ping localhost -n 1
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz014%	--id_gate=3
+ping localhost -n 1
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key641176%	--id_gate=3
+ping localhost -n 1
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key11388024%	--id_gate=3
+ping localhost -n 1
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key22332233%	--id_gate=3
 
 
 
@@ -111,7 +113,7 @@ REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearG
 REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
 REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=5
 
-ping localhost -n 1
+REM ping localhost -n 1
 rem въезжает первый автомобиль. Ожидаю событие Проезд разрешен
 REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=3
 rem ворота открываются, автомобиль начинает движение, и тут читается номер второго автомобиля. Это та же парковка, но другой гараж.  Ожидаю событие Проезд разрешен
@@ -126,25 +128,25 @@ REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKe
 
 
 rem тест 3.1-4 Чтение номера вдогонку при проезде двух автомобилей автомобилем через НЕ реверсивные ворота. 
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=100
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=100
 rem "очищаю" гаражи
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=1
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=2
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=5
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=1
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=2
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=5
 
-ping localhost -n 1
+REM ping localhost -n 1
 rem въезжает первый автомобиль. Ожидаю событие Проезд разрешен
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=5
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=5
 rem ворота открываются, автомобиль начинает движение, и тут читается номер второго автомобиля. Это та же парковка, но другой гараж.  Ожидаю событие Проезд разрешен
-ping localhost -n 5
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key11388024%	--id_gate=5
+REM ping localhost -n 5
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key11388024%	--id_gate=5
 rem первый автомобиль читается уже на выезде, с другой стороны ворот. Событие второй проезд через ревесивные ворота.
-ping localhost -n 15
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=6
+REM ping localhost -n 15
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=6
 rem а затем и вротой проезжает считыватель с другой стороны... Событие второй проезд через ревесивные ворота.
-ping localhost -n 5
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key11388024%	--id_gate=6
+REM ping localhost -n 5
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key11388024%	--id_gate=6
 
 
 
