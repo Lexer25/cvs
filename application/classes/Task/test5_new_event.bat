@@ -1,7 +1,4 @@
 rem test2.bat - тут собраны базовые тесты 
-set key=123456
-set grz=D213DD71
-
 set grz014=D014DD71
 set key014=3665363
 
@@ -10,24 +7,37 @@ set key005=50500505
 
 set keyT=11223344
 
+set keyA=8696164
+
+
+set keyT2=78787878
+set keyT3=987654321
+
+
 C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=100
 rem "очищаю" гараж
-rem тест 1-1: оба идентификатора принадлежа одному автомобилю. Перый идет UHF, затем ГРЗ. Ожидаю в таблице только один UHF (он был первым), занято только одно место.
+rem тест 5-1: оба идентификатора принадлежа одному автомобилю. Перый идет UHF, затем ГРЗ. Ожидаю в таблице только один UHF (он был первым), занято только одно место.
 
 C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
 C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=3
-ping localhost -n 1
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz014% --id_gate=3
+ping localhost -n 3
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz005% --id_gate=3
+ping localhost -n 3
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%keyT% --id_gate=3
+ping localhost -n 3
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%keyA% --id_gate=3
+ping localhost -n 3
+C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%keyT2% --id_gate=3
 
 
-rem тест 1-2: оба идентификатора принадлежа одному автомобилю. Перый идет ГРЗ, затем UHF. ОЖидаю в таблице ГРЗ, т.к. он был первым, занято одно место.
+rem тест 5-2: оба идентификатора принадлежа одному автомобилю. Перый идет ГРЗ, затем UHF. ОЖидаю в таблице ГРЗ, т.к. он был первым, занято одно место.
 REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
 REM ping localhost -n 10
 REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz014% --id_gate=3
 REM ping localhost -n 10
 REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=3
 
-rem тест 1-3: оба идентификатора принадлежат одному автомобилю. Перый идет ГРЗ, затем UHF. UHF уже на парковке. Ожидаю событие Повторный въезд, в таблице будет ГРЗ
+rem тест 5-3: оба идентификатора принадлежат одному автомобилю. Перый идет ГРЗ, затем UHF. UHF уже на парковке. Ожидаю событие Повторный въезд, в таблице будет ГРЗ
 rem сначала очищаю гараж и "ставлю" туда УХФ.
 rem затем пауза 8 секунд, чтобы следующий въезд не был быстрым, повторным.
 rem затем въезд ГРЗ. Ожидаю событие Повторный въезд под другим идентификатором.
@@ -41,7 +51,7 @@ REM ping localhost -n 1
 REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey  --key=%key014%	--id_gate=3	
 
 
-rem тест 1-4: оба идентификатора принадлежа одному автомобилю. Перый идет UHF, затем ГРЗ. ГРЗ уже на парковке. Ожидаю Повторный въезд, в таблице будет UHF
+rem тест 5-4: оба идентификатора принадлежа одному автомобилю. Перый идет UHF, затем ГРЗ. ГРЗ уже на парковке. Ожидаю Повторный въезд, в таблице будет UHF
 			
 REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
 REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz014% --id_gate=3

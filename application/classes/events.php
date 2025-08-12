@@ -12,8 +12,8 @@ class events {
 				public $is_enter='null';
 				public $rubi_card='null';
 				public $park_card='null';
-				public $grz='null';
-				public $comment='null';
+				public $grz;
+				public $comment='';
 				public $photo='null';
 				public $id_pep='null';
 				public $id_gate='null';
@@ -32,6 +32,10 @@ class events {
 				const UNKNOWNRESULT=-1;
 				const WOK_PEP=11;
 				const ANALYSERBUSY=7;
+				
+				const OKG_PLACE=15;//въезд разрешен по наличию гаража, места есть
+				
+				
 	
 	public function addEvent()//добавление события в таблицу HL_EVENTS
 	{
@@ -66,6 +70,10 @@ class events {
 	//19.07.2025
 	public function addEventRow()//добавление события в таблицу HL_EVENTS
 	{
+		$config = Kohana::$config->load('config');
+		$mess=$this->comment;
+		if(Arr::get($config, 'debug')) $mess = $mess. ' debug_ON' ;
+		if(Arr::get($config, 'testMode')) $mess = $mess. ' testMode_ON' ;
 		$_data=array(
 				':EVENT_CODE'=>$this->eventCode,
 				':EVENT_TIME'=>$this->event_time,
@@ -73,18 +81,19 @@ class events {
 				':RUBI_CARD'=>$this->rubi_card,
 				':PARK_CARD'=>$this->park_card,
 				':GRZ'=>'\''.$this->grz.'\'',
-				':COMMENT'=>$this->comment,
+				':COMMENT'=>'\''.$mess.'\'',
 				':PHOTO'=>$this->photo,
 				':ID_PEP'=>$this->id_pep,
 				':ID_GATE'=>$this->id_gate,
 				':CREATED'=>$this->created
 			);
+			
 		
 		$sql=__('INSERT INTO HL_EVENTS (EVENT_CODE,IS_ENTER,RUBI_CARD,PARK_CARD,GRZ,COMMENT,PHOTO,ID_PEP,ID_GATE)
 			VALUES (:EVENT_CODE,:IS_ENTER,:RUBI_CARD,:PARK_CARD,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE)', $_data);
 			
 		//echo Debug::vars('78',$_data, $sql);
-		//Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
+		Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
 		try
 			{
 				$query = DB::query(Database::INSERT, iconv('UTF-8', 'CP1251',$sql))

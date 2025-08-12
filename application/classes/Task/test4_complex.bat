@@ -25,6 +25,15 @@ set key005=50500505
 
 set keyT=11223344
 
+set keyA=8696164
+
+
+set keyT2=78787878
+set keyT3=987654321
+
+
+
+
 rem Иванов гараж (id_garage=1)
 
 rem Показники

@@ -109,7 +109,7 @@ where hlp.box_ip=\''.$ip.'\'';
 	}
 	
 	
-	/**20.07/2025
+	/**20.07/2025 основной модуль анализа разрешения на въезд
 	*
 	*
 	*/
@@ -182,17 +182,10 @@ where hlp.box_ip=\''.$ip.'\'';
 
 		} 
 //========== есть гараж ===========================		
-//ГАРАЖА ЕСТЬ!!!			
+//ГАРАЖ ЕСТЬ!!!			
 		//надо иметь информацию о гараже.
 			$garage=new Garage($identifier->id_garage);//это - модель гаража, куда едет ГРЗ. Этот параметр беретс из $identifier->id_garage, но для отладки использую фиксировнное значение  $id_garage
-			//echo Debug::vars('109 ГРЗ едет вот в этот гараж', $garage);
-		
-	/* 	Log::instance()->add(Log::NOTICE, '803  гараж :garage.',
-				array(
-					':key'=>$identifier->id,
-					':garage'=>Debug::vars($garage)
-					));		 */
-		
+				
 		Log::instance()->add(Log::NOTICE, '190 :key identifier :key имеет гараж :garage.',
 				array(
 					':key'=>$identifier->id,
@@ -211,13 +204,7 @@ where hlp.box_ip=\''.$ip.'\'';
 					':key'=>$identifier->id,
 					':status'=>$identifier->status
 					));
-				
-				// $event->eventCode=events::ACCESSDENIED;
-				// $event->grz=$grz;
-				// $event->addEventRow();
 				return Events::ACCESSDENIED;				
-				//echo Debug::vars('134 ошибся воротами!');
-				//exit;
 			} 
 				Log::instance()->add(Log::NOTICE, '216 :key identifier :key подъехала к своим воротам.',
 				array(
@@ -235,7 +222,7 @@ where hlp.box_ip=\''.$ip.'\'';
 					':key'=>$identifier->id,
 					':id_pep'=>$identifier->id_pep,
 					));
-						return Events::WOK;	//повторный въезд
+						return Events::WOK;	//w dubble OK повторный въезд
 					} else {
 					
 						if(insideList::checkIdPepInParking($identifier)) //id_pep уже на парковке, но под другим идентификатором
@@ -245,15 +232,15 @@ where hlp.box_ip=\''.$ip.'\'';
 							':key'=>$identifier->id,
 							':id_pep'=>$identifier->id_pep,
 							));
-								return Events::WOK_PEP;	//повторный въезд
+								return Events::WOK_PEP;	//повторный въезд по владельцу
 							}
 					}
 				
-					if($cvs->checkPHPin($garage)){//если в гараже есть места или именно этот ГРЗ уже стоит в гараже
+					if($cvs->checkPHPin($garage)){//если в гараже есть места
 						
 						//въезд разрешен
 						
-						return Events::OK;	
+						return Events::OKG_PLACE;	
 					} else {
 						//въезд запрещен (нет мест)
 						//но этот id_pep может уже стоять в гараже, и тогда надо запустить... повторный въезд
@@ -269,13 +256,7 @@ where hlp.box_ip=\''.$ip.'\'';
 					} else {
 						return Events::OK_2;	
 					}						
-					/* if($cvs->checkPHPout($garage)){
-						//выезд разрешен
-						return Events::OK;
-					} else {
-						//выезд запрещен
-						return Events::ACCESSDENIED;	
-					} */
+					
 				}
  	
 			
@@ -384,6 +365,7 @@ where hlp.box_ip=\''.$ip.'\'';
 		 switch($cvs->code_validation){
 		
 		
+			case events::OKG_PLACE : //въезд разрешен по наличию гаража, места есть.
 			case events::WOK_PEP : //повторный проезд разрешен
 			case events::WOK : //повторный проезд разрешен
 			case 50 : //проезда разрешен
@@ -565,7 +547,18 @@ where hlp.box_ip=\''.$ip.'\'';
 			$t1=microtime(true);	
 			$cvs=new phpCVS($id_gate);
 			$identifier=new Identifier($identifier);
+			
+			Log::instance()->add(Log::NOTICE, '551-0 :key паровозик identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
+			Log::instance()->add(Log::NOTICE, '552-1 :key паровозик cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
 				
+			//готовлю класс для записи события.
+			//единые для всех событий данные заполняю заранее.
+			$events= new Events();
+			$events->grz=$identifier->id;
+			$events->id_gate=$cvs->id_gate;
+			$events->is_enter=$cvs->isEnter;
+			$events->park_card=$identifier->id_garage;//номер гаража
+					
 	//Фильтр от повтора
 			  
 			   if (Cache::instance()->get('grz_'.$identifier->id))
@@ -574,10 +567,11 @@ where hlp.box_ip=\''.$ip.'\'';
 					$result=9;
 					Log::instance()->add(Log::NOTICE, '240 Повторный прием идентификатора grz :grz в течении менее чем :delay_cvs. Обработка прекращена с кодом :result', 
 						array(':grz'=>$identifier->id, ':result'=>$result, ':delay_cvs'=>Setting::get('delay_cvs', 120))); 
-					$events= new Events();
-					$events->eventCode=$result;
-					$events->grz=$identifier->id;
-					$events->id_gate=$cvs->id_gate;
+					// $events= new Events();
+					 $events->eventCode=$result;
+					// $events->grz=$identifier->id;
+					// $events->id_gate=$cvs->id_gate;
+					// $events->is_enter=$cvs->isEnter;
 					$events->addEventRow();
 					
 					exit;
@@ -599,10 +593,11 @@ where hlp.box_ip=\''.$ip.'\'';
 					// Данные найдены в кеше, не надо обрабатывать ГРЗ.
 					Log::instance()->add(Log::NOTICE, '600 :key найден мьютекс :name. Это значит, что ворота находятся во временной блокировке', array(':key'=>$identifier->id, ':name'=>'gateBlock_'.$cvs->id_gate)); 
 					Log::instance()->add(Log::NOTICE, '601 Прием идентификатора :key от ворот :id_gate в момент встречного движена в реверсивных воротах. Обработка идентификатора прекращена с кодом :result', array(':key'=>$identifier->id, ':id_gate'=>$cvs->id_gate, ':result'=>$result)); 
-					$events= new Events();
+					
+					//$events= new Events();
 					$events->eventCode=$result;
-					$events->grz=$identifier->id;
-					$events->id_gate=$cvs->id_gate;
+					//$events->grz=$identifier->id;
+					//$events->id_gate=$cvs->id_gate;
 					$events->addEventRow();
 				
 					exit;
@@ -625,10 +620,15 @@ where hlp.box_ip=\''.$ip.'\'';
 			if(Arr::get($_data, 'id_gate') == $cvs->id_gate)
 			{
 				 
-				//если попали сюда - значит, это "паровозик".
+				//если попали сюда - значит, это "паровозик": попытка проезд в то время, пока ворота открыты от предыдущего проезда.
 				//из "паровозика" можно выйти в случаях:
 				// - если номер принадлежит ранее проехавшему id_pep (т.е. прочитан второй идентификатор проезждающей машины
 				// - если гараж принадлежит ранее проехавшему автомобилю
+				// - если номер не валиден либо не имеет право на проезд 12.08.2025 г.
+				
+				 Log::instance()->add(Log::NOTICE, '634-0 :key паровозик identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
+				 Log::instance()->add(Log::NOTICE, '634-1 :key паровозик cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
+		
 				 $result=Events::ANALYSERBUSY;//код 7 - процесс занят
 				 
 				  Log::instance()->add(Log::NOTICE, '285 :key найден мьютекс :name :data', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
@@ -643,10 +643,10 @@ where hlp.box_ip=\''.$ip.'\'';
 					{
 						//номер другой, но владелец тот же самый. вот тут надо прекращать обработку.
 						$result=11;
-						$events= new Events();
+					//	$events= new Events();
 						$events->eventCode=$result;
-						$events->grz=$identifier->id;
-						$events->id_gate=$cvs->id_gate;
+					//	$events->grz=$identifier->id;
+					//	$events->id_gate=$cvs->id_gate;
 						$events->addEventRow();
 						 Log::instance()->add(Log::NOTICE, '651 :key номер другой, но владелец :id_pep тот же. Завершаю обработку exit;', array(':key'=>$identifier->id, ':id_pep'=>$identifier->id_pep));
 						exit;
@@ -654,12 +654,13 @@ where hlp.box_ip=\''.$ip.'\'';
 					
 					if((Arr::get($_data, 'id_garage') == $identifier->id_garage))
 					{
+						
 						//Едет еще кто-то из того же гаража. Не обрабатывать!!!
 						$result=8;
-						$events= new Events();
+				//		$events= new Events();
 						$events->eventCode=$result;
-						$events->grz=$identifier->id;
-						$events->id_gate=$cvs->id_gate;
+				//		$events->grz=$identifier->id;
+				//		$events->id_gate=$cvs->id_gate;
 						$events->addEventRow();
 					 Log::instance()->add(Log::NOTICE, '664 :key номер другой, но гараж :id_garage тот же. Завершаю обработку exit;', array(':key'=>$identifier->id,':id_garage'=>$identifier->id_garage));
 
@@ -724,10 +725,10 @@ where hlp.box_ip=\''.$ip.'\'';
 //=========== запись события в журнал
 
 				
-		$events= new Events();
+		//$events= new Events();
 		$events->eventCode=$cvs->code_validation;
-		$events->grz=$identifier->id;
-		$events->id_gate=$cvs->id_gate;
+		//$events->grz=$identifier->id;
+		//$events->id_gate=$cvs->id_gate;
 		$events->addEventRow();
 		Log::instance()->add(Log::NOTICE, '342 :key save events code=:code , grz=:grz, gate=:gate', array(':key'=>$identifier->id, ':code'=>$events->eventCode, ':grz'=>$events->grz, ':gate'=>$events->id_gate));
 		
