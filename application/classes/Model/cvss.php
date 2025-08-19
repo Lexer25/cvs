@@ -22,7 +22,7 @@ class Model_Cvss extends Model {
 	public static function checkIpIsPresent ($ip) // 
 	{
 	$sql='select distinct hlp.box_ip from hl_param hlp
-where hlp.box_ip=\''.$ip.'\'';
+		where hlp.box_ip=\''.$ip.'\'';
 	return( DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->get('BOX_IP') >0);
@@ -110,7 +110,7 @@ where hlp.box_ip=\''.$ip.'\'';
 	
 	
 	/**20.07/2025 основной модуль анализа разрешения на въезд
-	*
+	* события 
 	*
 	*/
 	//
@@ -222,7 +222,7 @@ where hlp.box_ip=\''.$ip.'\'';
 					':key'=>$identifier->id,
 					':id_pep'=>$identifier->id_pep,
 					));
-						return Events::WOK;	//w dubble OK повторный въезд
+						return Events::G_WOK;	//w dubble OK повторный въезд
 					} else {
 					
 						if(insideList::checkIdPepInParking($identifier)) //id_pep уже на парковке, но под другим идентификатором
@@ -232,7 +232,7 @@ where hlp.box_ip=\''.$ip.'\'';
 							':key'=>$identifier->id,
 							':id_pep'=>$identifier->id_pep,
 							));
-								return Events::WOK_PEP;	//повторный въезд по владельцу
+								return Events::G_WOK_PEP;	//повторный въезд по владельцу
 							}
 					}
 				
@@ -240,7 +240,7 @@ where hlp.box_ip=\''.$ip.'\'';
 						
 						//въезд разрешен
 						
-						return Events::OKG_PLACE;	
+						return Events::G_OK_PLACE;	//есть места
 					} else {
 						//въезд запрещен (нет мест)
 						//но этот id_pep может уже стоять в гараже, и тогда надо запустить... повторный въезд
@@ -252,9 +252,9 @@ where hlp.box_ip=\''.$ip.'\'';
 				
 					if(insideList::checkGrzInParking($identifier))//ГРЗ на парковке
 					{ 
-						return Events::OK;			
+						return Events::G_OK;//просто штатный выезд			
 					} else {
-						return Events::OK_2;	
+						return Events::G_OK_2;//выезд без въезда	
 					}						
 					
 				}
@@ -364,12 +364,19 @@ where hlp.box_ip=\''.$ip.'\'';
 			
 		 switch($cvs->code_validation){
 		
-		
-			case events::OKG_PLACE : //въезд разрешен по наличию гаража, места есть.
-			case events::WOK_PEP : //повторный проезд разрешен
-			case events::WOK : //повторный проезд разрешен
-			case 50 : //проезда разрешен
-				$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
+			//проез разрешен по категориям доступа
+			case events::WOK : //повторный проезд разрешен, категория
+			case events::OK : //проезда разрешен, категория
+			
+			//проезд разрешен по наличию гаражей
+							
+			case events::G_OK_PLACE : //15 въезд разрешен по наличию гаража, места есть
+			case events::G_WOK_PEP : //16 повторный въезд разрешен.Этого ГРЗ на парковке нет, но есть этот пипел
+			case events::G_WOK : //18 повторный въезд разрешен .Этот ГРЗ уже есть на парковке
+			case events::G_OK : //17 выезд разрешен, имеется гараж, на парковке находится
+			case events::G_OK_2 : //14 выезд разрешен без въезда, имеется гараж, на парковке не находится
+			
+			$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
 				//Log::instance()->add(Log::NOTICE, '307-307  '.Debug::vars($mpt));
 				if(!Arr::get($config, 'debug')) {
 						$mpt->openGate($cvs->mode);// если режим отладки НЕ включен, то даю команду открыть ворота
@@ -401,7 +408,7 @@ where hlp.box_ip=\''.$ip.'\'';
 						
 						if($cvs->isEnter==1) {// въезд
 							$inside->addToInside();
-							Log::instance()->add(Log::NOTICE, '378 добавляю в HL_inside :key, ', array(':key'=> $inside->id_card,':id_pep'=> $inside->id_pep,':id_parking'=> $inside->id_parking));
+							Log::instance()->add(Log::NOTICE, '378 добавляю в HL_inside :key id_pep :id_pep, id_parking :id_parking ', array(':key'=> $inside->id_card,':id_pep'=> $inside->id_pep,':id_parking'=> $inside->id_parking));
 						} else { //это выезд
 							//обработка для С гаражом и Без гаража - разная.
 							//без гаража - надо только удалить этого id_pep из таблицы inside
@@ -548,8 +555,8 @@ where hlp.box_ip=\''.$ip.'\'';
 			$cvs=new phpCVS($id_gate);
 			$identifier=new Identifier($identifier);
 			
-			Log::instance()->add(Log::NOTICE, '551-0 :key паровозик identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
-			Log::instance()->add(Log::NOTICE, '552-1 :key паровозик cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
+			//Log::instance()->add(Log::NOTICE, '551-0 :key common identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
+			//Log::instance()->add(Log::NOTICE, '552-1 :key common cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
 				
 			//готовлю класс для записи события.
 			//единые для всех событий данные заполняю заранее.
@@ -557,7 +564,7 @@ where hlp.box_ip=\''.$ip.'\'';
 			$events->grz=$identifier->id;
 			$events->id_gate=$cvs->id_gate;
 			$events->is_enter=$cvs->isEnter;
-			$events->park_card=$identifier->id_garage;//номер гаража
+			if(!is_null($identifier->id_garage)) $events->id_garage=$identifier->id_garage;//номер гаража
 					
 	//Фильтр от повтора
 			  
@@ -581,7 +588,7 @@ where hlp.box_ip=\''.$ip.'\'';
 				 //  Log::instance()->add(Log::NOTICE, '260 :key Первая отмета. Зафиксирую в мьютексе :name..', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
 					
 				   Cache::instance()->set('grz_'.$identifier->id, array('set_grz'=>1, 'key'=>$identifier->id), Setting::get('delay_cvs', 120));
-				   Log::instance()->add(Log::NOTICE, '267 :key входной фильтр на дубликат номера. нет мьютекс :name. Значит эту отметка не получали давно. Фиксирую в мьютексе и продолжаю обработку.', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
+				   Log::instance()->add(Log::NOTICE, '267 :key входной фильтр от повтора номера. нет мьютекс :name. Значит эту отметка не получали давно. Фиксирую в мьютексе и продолжаю обработку.', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
 			  
 			   }
 			    
@@ -676,7 +683,7 @@ where hlp.box_ip=\''.$ip.'\'';
 					//============== Главное! анализ!!! ==============================		
 						$result=Model::factory('cvss')->mainAnalysis($identifier,  $cvs);
 					//===================================================================
-						Log::instance()->add(Log::NOTICE, '292 :key stop mainAnalysis с результатом :result.', array(':key'=>$identifier->id, ':result'=> $result));
+						Log::instance()->add(Log::NOTICE, '292 :key gate :gate garage :garage stop mainAnalysis с результатом :result.', array(':key'=>$identifier->id, ':result'=> $result, ':gate'=>$cvs->id_gate, ':garage'=>$identifier->id_garage));
 				   
 			 //  }
 			   

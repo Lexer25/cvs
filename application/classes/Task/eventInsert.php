@@ -3,7 +3,7 @@
     /**
      * Вставка события о начале тестирования.
      *
-     * C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=100
+     * C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=100 --comment=56
      */
      
     class Task_eventInsert extends Minion_Task {
@@ -13,6 +13,7 @@
         'id'   => 0,
         'grz'   => '',
         'id_gate'   => '',
+        'comment'   => '',
         
 		);
         
@@ -35,6 +36,8 @@
 			Log::instance()->add(Log::NOTICE, '22-22  :data', array(':data'=>$mess));
 			$events= new Events();
 			$events->eventCode=Arr::get($params, 'id');
+			//$events->comment=iconv('windows-1251','UTF-8', Arr::get($params, 'comment'));
+			$events->comment=Arr::get($params, 'comment');
 			//$events->grz=$identifier->id;
 			//$events->id_gate=$cvs->id_gate;
 			$events->addEventRow();

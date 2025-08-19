@@ -14,10 +14,10 @@ C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInser
 rem "очищаю" гараж
 rem тест 1-1: оба идентификатора принадлежа одному автомобилю. Перый идет UHF, затем ГРЗ. Ожидаю в таблице только один UHF (он был первым), занято только одно место.
 
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=3
-ping localhost -n 1
-C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz014% --id_gate=3
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=3
+REM ping localhost -n 1
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz014% --id_gate=3
 
 
 rem тест 1-2: оба идентификатора принадлежа одному автомобилю. Перый идет ГРЗ, затем UHF. ОЖидаю в таблице ГРЗ, т.к. он был первым, занято одно место.
@@ -31,7 +31,7 @@ rem тест 1-3: оба идентификатора принадлежат о�
 rem сначала очищаю гараж и "ставлю" туда УХФ.
 rem затем пауза 8 секунд, чтобы следующий въезд не был быстрым, повторным.
 rem затем въезд ГРЗ. Ожидаю событие Повторный въезд под другим идентификатором.
-rem а затем, через 1 секунду, въезд того же владельца по ХУФ. Ожидаю событие Повторный въезд.
+rem а затем, через 1 секунду, въезд того же владельца по ХУФ. Ожидаю событие Повторный въезд, в гараже - ГРЗ, т.к. он был первым.
 
 REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
 REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=3
@@ -39,9 +39,11 @@ REM ping localhost -n 8
 REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz014% --id_gate=3
 REM ping localhost -n 1			
 REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey  --key=%key014%	--id_gate=3	
+REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=101 -cooment='Событие повторный въезд'
 
 
-rem тест 1-4: оба идентификатора принадлежа одному автомобилю. Перый идет UHF, затем ГРЗ. ГРЗ уже на парковке. Ожидаю Повторный въезд, в таблице будет UHF
+rem тест 1-4: оба идентификатора принадлежа одному автомобилю. Перый идет UHF, затем ГРЗ. ГРЗ уже на парковке. 
+rem Ожидаю Повторный въезд, в таблице будет UHF
 			
 REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=3
 REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz014% --id_gate=3
@@ -60,30 +62,30 @@ REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=
 
 
 REM echo test 2-0-0 Поток неизвестных идентификаторов. Сначало ожидаю событие Неизвестная карта, а затем отказ из-за повторов
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
-REM ping localhost -n 1
-REM start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
-REM ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key%	
+ping localhost -n 1
+start C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%grz%
+ping localhost -n 1
 
 
 

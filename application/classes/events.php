@@ -10,8 +10,8 @@ class events {
 				public $eventCode='null';
 				public $event_time='null';
 				public $is_enter='null';
+				public $id_garage='null';
 				public $rubi_card='null';
-				public $park_card='null';
 				public $grz;
 				public $comment='';
 				public $photo='null';
@@ -20,20 +20,29 @@ class events {
 				public $created='null';
 				
 				
-				const CARLIMITEXCEEDED=81;
-				const UNKNOWNCARD=46;
-				const DISABLEDCARD=65;
-				const CARDEXPIRED=65;
-				const DISABLEDUSER=65;
-				const ACCESSDENIED=65;
-				const WOK=6;//двойной въезд
-				const OK=50;
-				const OK_2=14;//выезд, хотя на парковке не находится
+				const CARLIMITEXCEEDED=81;//нет мест
+				const UNKNOWNCARD=46;//неизвестная карта
+				const DISABLEDCARD=65;//карта неактивна
+				const CARDEXPIRED=65;//срок действия карты истек
+				const DISABLEDUSER=65;//пользователь неактивен
+				const ACCESSDENIED=65;//доступ запрещен
+				
+				//события по идентификаторам без гаража
+				const WOK=6;//повторный въезд по категории доступа
+				const OK=50;//въезд или выезд разрешены по категории доступа. Тут полное совпадение с событиями СКУД
+				
+				//события с идентификатором с гаражом
+				const G_OK_PLACE=15;//въезд разрешен по наличию гаража, места есть
+				const G_WOK_PEP=16;//повторный въезд разрешен.Этого ГРЗ на парковке нет, но есть этот пипел
+				const G_WOK=18;//повторный въезд разрешен .Этот ГРЗ уже есть на парковке
+				
+				const G_OK=17;//выезд разрешен, имеется гараж, на парковке находится
+				const G_OK_2=14;//выезд разрешен без въезда, имеется гараж, на парковке не находится
 				const UNKNOWNRESULT=-1;
-				const WOK_PEP=11;
 				const ANALYSERBUSY=7;
 				
-				const OKG_PLACE=15;//въезд разрешен по наличию гаража, места есть
+				
+				
 				
 				
 	
@@ -74,12 +83,15 @@ class events {
 		$mess=$this->comment;
 		if(Arr::get($config, 'debug')) $mess = $mess. ' debug_ON' ;
 		if(Arr::get($config, 'testMode')) $mess = $mess. ' testMode_ON' ;
+		//if(is_null($this->id_garage)) $this->id_garage = '\'NULL\'' ;
+		//Log::instance()->add(Log::NOTICE, '80  :data', array(':data'=>Debug::vars($this)));
+		
 		$_data=array(
 				':EVENT_CODE'=>$this->eventCode,
 				':EVENT_TIME'=>$this->event_time,
 				':IS_ENTER'=>$this->is_enter,
 				':RUBI_CARD'=>$this->rubi_card,
-				':PARK_CARD'=>$this->park_card,
+				':ID_GARAGE'=>$this->id_garage,
 				':GRZ'=>'\''.$this->grz.'\'',
 				':COMMENT'=>'\''.$mess.'\'',
 				':PHOTO'=>$this->photo,
@@ -89,11 +101,11 @@ class events {
 			);
 			
 		
-		$sql=__('INSERT INTO HL_EVENTS (EVENT_CODE,IS_ENTER,RUBI_CARD,PARK_CARD,GRZ,COMMENT,PHOTO,ID_PEP,ID_GATE)
-			VALUES (:EVENT_CODE,:IS_ENTER,:RUBI_CARD,:PARK_CARD,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE)', $_data);
+		$sql=__('INSERT INTO HL_EVENTS (EVENT_CODE,IS_ENTER,RUBI_CARD,ID_GARAGE,GRZ,COMMENT,PHOTO,ID_PEP,ID_GATE)
+			VALUES (:EVENT_CODE,:IS_ENTER,:RUBI_CARD,:ID_GARAGE,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE)', $_data);
 			
 		//echo Debug::vars('78',$_data, $sql);
-		Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
+		//Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
 		try
 			{
 				$query = DB::query(Database::INSERT, iconv('UTF-8', 'CP1251',$sql))

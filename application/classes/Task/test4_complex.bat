@@ -75,7 +75,6 @@ set key3417555=3417555
 set key3410387=3410387
 set key7THT3321=7THT3321
 
-set delay10=10
 
 C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=eventInsert --id=100
 C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=1
@@ -84,6 +83,7 @@ C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarag
 C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=clearGarage --id_garage=5
 
 rem тест 4.1-0 последовательный проезд по всем гаражам для Артсека.
+rem ожидаю 7 событий в журнале
 REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=3
 REM ping localhost -n 20
 REM C:\xampp\php\php.exe c:\xampp\htdocs\cvs\modules\minion\minion --task=sendKey --key=%key014%	--id_gate=4
