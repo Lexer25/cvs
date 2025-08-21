@@ -97,15 +97,17 @@ class events {
 				':PHOTO'=>$this->photo,
 				':ID_PEP'=>$this->id_pep,
 				':ID_GATE'=>$this->id_gate,
-				':CREATED'=>$this->created
+				':CREATED'=>$this->created,
+				':EVENT_TIME'=>'\''.date('d.m.Y H:i:s').'\''
 			);
 			
-		
-		$sql=__('INSERT INTO HL_EVENTS (EVENT_CODE,IS_ENTER,RUBI_CARD,ID_GARAGE,GRZ,COMMENT,PHOTO,ID_PEP,ID_GATE)
-			VALUES (:EVENT_CODE,:IS_ENTER,:RUBI_CARD,:ID_GARAGE,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE)', $_data);
+		//INSERT INTO HL_EVENTS (ID,EVENT_CODE,EVENT_TIME,IS_ENTER,RUBI_CARD,PARK_CARD,GRZ,COMMENT,PHOTO,ID_PEP,ID_GATE,CREATED,ID_GARAGE) 
+		//VALUES (25076,101,'19-AUG-2025 20:21:43',NULL,NULL,NULL,'',' debug_ON',NULL,NULL,NULL,'19-AUG-2025 20:21:43',NULL);
+		$sql=__('INSERT INTO HL_EVENTS (EVENT_CODE,EVENT_TIME,IS_ENTER,RUBI_CARD,ID_GARAGE,GRZ,COMMENT,PHOTO,ID_PEP,ID_GATE)
+			VALUES (:EVENT_CODE,:EVENT_TIME,:IS_ENTER,:RUBI_CARD,:ID_GARAGE,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE)', $_data);
 			
 		//echo Debug::vars('78',$_data, $sql);
-		//Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
+		Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
 		try
 			{
 				$query = DB::query(Database::INSERT, iconv('UTF-8', 'CP1251',$sql))
