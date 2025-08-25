@@ -107,7 +107,7 @@ class events {
 			VALUES (:EVENT_CODE,:EVENT_TIME,:IS_ENTER,:RUBI_CARD,:ID_GARAGE,:GRZ,:COMMENT,:PHOTO,:ID_PEP,:ID_GATE)', $_data);
 			
 		//echo Debug::vars('78',$_data, $sql);
-		Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
+		//Log::instance()->add(Log::NOTICE, '82  :data', array(':data'=>$sql));
 		try
 			{
 				$query = DB::query(Database::INSERT, iconv('UTF-8', 'CP1251',$sql))

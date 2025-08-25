@@ -60,6 +60,7 @@ return array
 		'driver'             => 'file',
 		'cache_dir'          => APPPATH.'cache',
 		'default_expire'     => 3600,
+		//'encrypt_names'      => FALSE, // Отключаем шифрование имен
 		'ignore_on_delete'   => array(
 			'.gitignore',
 			'.git',

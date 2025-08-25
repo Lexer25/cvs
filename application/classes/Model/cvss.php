@@ -7,6 +7,9 @@ class Model_Cvss extends Model {
 	/**Провка: находится ли номер видеокамеры в настройках?
 	*@param $cam номер видеокамеры
 	*/
+	
+	//public $db='parkresident';
+	public $db='pr';
 	public static function checkCamIsPresent ($cam) // 
 	{
 	$sql='select hlp.id_cam from hl_param hlp
@@ -381,6 +384,8 @@ class Model_Cvss extends Model {
 				if(!Arr::get($config, 'debug')) {
 						$mpt->openGate($cvs->mode);// если режим отладки НЕ включен, то даю команду открыть ворота
 				} else {
+					Log::instance()->add(Log::NOTICE, '387 Режим TEST включен, команда на ворота подается всегда.');		
+			
 					$mpt->result ='OK';
 				}			
 				//============= даю в цикле команды на открытие ворот. Цикл сделан на случай потери связи, и был актуален для UDP
@@ -420,7 +425,7 @@ class Model_Cvss extends Model {
 									Log::instance()->add(Log::NOTICE, '397 :key это выезд без гаража', array(':key'=> $inside->id_card));	
 									$inside->delFromInside();//если на парковке, то удаляю пипла по его id_pep
 							} else {//если есть гараж
-								if($identifier->checkInParking($cvs->id_parking))
+								if($identifier->checkInParking($cvs->id_parking))//внутри ли пипел?
 								{
 									Log::instance()->add(Log::NOTICE, '397 :key НА парковке', array(':key'=> $inside->id_card));
 									$inside->delFromInside();//если на парковке, то удаляю пипла по его id_pep
@@ -538,7 +543,7 @@ class Model_Cvss extends Model {
 			 
 			 default: //код валидации не обрабатывается.
 			 
-				Log::instance()->add(Log::NOTICE, "244 Неизвестный код валидации. Ворота не открываются, на табло ничего не выводится ". $cvs->code_validation);
+				Log::instance()->add(Log::NOTICE, "244 Неизвестный код валидации ":code ". Ворота не открываются, на табло ничего не выводится ", array(':code'=>$cvs->code_validation));
 			
 			 
 			 break;
@@ -592,7 +597,7 @@ class Model_Cvss extends Model {
 			  
 			   }
 			    
-			   //проверка: не находится ли ворота во временной блокировке? Это актуально для реверсивных ворот
+	// Фильтр проверка: не находится ли ворота во временной блокировке? Это актуально для реверсивных ворот
 			   //в это время любые данные UHF и ГРЗ игнорируются.
 			   if (Cache::instance()->get('gateBlock_'.$cvs->id_gate))
 			   {
@@ -824,5 +829,169 @@ class Model_Cvss extends Model {
 			
 		}
 		
+		
+		
+		/**фукнция saveKeyFromGate сохраняет данные, полученные от UHF или ГРЗ, с указанием номера ворот.
+		* данные - это массив: что получили - то и выводим.
+		* если id_pep для добавлямего идентификатора уже существует, то вставка не производится.
+		*/
+		public function saveKeyFromGate($id_pep, $identifier, $id_gate, $result)
+		{
+			
+        
+			// Проверяем существует ли запись
+			$exists = DB::select('id_pep')
+				->from('keys')
+				->where('id_pep', '=', $id_pep)
+				->execute($this->db)
+				->count() > 0;
+			
+			if ($exists) {
+				// Обновляем существующую запись
+			  
+				Log::instance()->add(Log::NOTICE, '856 :key повторное чтение для уже того же id_pep :id_pep в id_gate :id_gate. Запись не добавляется во временный буфер.', array(':key'=>$identifier,':id_pep'=>$id_pep, ':id_gate'=>$id_gate));
+				return 0;
+				
+			} else {
+				// Вставляем новую запись
+			   /*  DB::insert($table, array_keys($data))
+					->values(array_values($data))
+					->execute(); */
+				$type='--';
+				$timestamp= (int) microtime(true);
+				//Log::instance()->add(Log::NOTICE, '851 :key id_gate :data', array(':key'=>$identifier,':data'=>Debug::vars($gate, $key, $type, $timestamp)));
+				
+				$query = DB::insert('keys', array('id_pep', 'gate', 'key', 'type', 'timestamp', 'result'))
+						->values(array($id_pep, $id_gate, $identifier, $type, $timestamp, $result))
+						;
+			return $query->execute($this->db);
+			}
+  
+		}
+			
+
 	
+		/**фукнция getKeyFromGate извлекает данные о последних полученных UHF или ГРЗ
+		* @input $id_gate - номер ворот, которые надо обрабатывать.
+		* данные - это массив: что получили - то и выводим.
+		*/
+		public function getKeyFromGate($id_gate)
+		{
+			
+			$evCode=array(events::WOK,
+				events::OK,
+				events::G_OK_PLACE,
+				events::G_WOK_PEP,
+				events::G_WOK,
+				events::G_OK,
+				events::G_OK_2);//коды событий, по которым разрешен проезд, когда надо открывать ворота
+			
+			$deltaTbefor=20;//в секундах - за какое время до текущего момента искать идентификаторы
+			  $keys = DB::select('key', 'id_pep', 'result')
+				->from('keys')
+				->where('gate', '=', $id_gate)
+				->where('result', 'IN', $evCode)
+				->and_where('timestamp', '>', (int)(microtime(true) - $deltaTbefor))
+				->distinct(TRUE)
+				->limit(1)
+				->order_by('timestamp', 'asc')
+				->execute($this->db);
+		
+			//Log::instance()->add(Log::NOTICE, '877 :data', array(':data'=>Debug::vars($id_gate, $keys)));
+			
+			
+			return $keys;
+			
+		}
+		
+		
+		/**фукнция delKeyFromGate удаляет данные для указанного gate
+		* @input $id_gate - номер ворот, которые надо обрабатывать.
+		* данные - это массив: что получили - то и выводим.
+		*/
+		public function delKeyFromGate($id_gate)
+		{
+			
+			$count = DB::delete('keys')
+			->where('gate', '=', $id_gate)
+			->execute($this->db);
+				
+			Log::instance()->add(Log::NOTICE, '895 :data', array(':data'=>Debug::vars($count)));
+			
+			
+			return $count;
+			
+		}
+		
+		
+		/**фукнция delIdPepFromGate удаляет данные для указанного id_pep
+		* @input $id_gate - номер ворот, которые надо обрабатывать.
+		* данные - это массив: что получили - то и выводим.
+		*/
+		public function delIdPepFromGate($id_pep)
+		{
+			
+			$count = DB::delete('keys')
+			->where('id_pep', '=', $id_pep)
+			->execute($this->db);
+				
+			Log::instance()->add(Log::NOTICE, '938 :data', array(':data'=>Debug::vars($count)));
+			
+			
+			return $count;
+			
+		}
+		
+		
+		
+		
+		/**фукнция delOldKeyFromGate удаляет записи старше указанного периода.
+		* @input $delay период в секундах, свыше которого записи надо удалить.
+		* данные - это массив: что получили - то и выводим.
+		*/
+		public function delOldKeyFromGate($delay)
+		{
+			
+			$count = DB::delete('keys')
+			->where('timestamp', '<', (int)(microtime(true) - $delay))
+			->execute($this->db);
+				
+			Log::instance()->add(Log::NOTICE, '895 :data', array(':data'=>Debug::vars($count)));
+			
+			
+			return $count;
+			
+		}
+		
+		
+		/** 22.08.2025 При получении идентификатора выполняется проверка: как давно орабатывался этот же идентификатор?
+		* если интервал между получениями больше чем Т1, то возвращается true.
+		* если интервал между получениями меньше чем Т1, то возвращается false.
+		*/
+		
+		public function repeatFilter($identifier, $cacheName)
+		{
+			  $delay=Setting::get('delay_cvs', 120);
+			  $name=$cacheName.'_'.$identifier;
+			  if (Cache::instance()->get($name))
+			   {
+					// Данные найдены в кеше, не надо обрабатывать ГРЗ.
+					$result=9;
+					return false;
+				
+			   } else {
+				   
+				 //  Log::instance()->add(Log::NOTICE, '260 :key Первая отмета. Зафиксирую в мьютексе :name..', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
+					
+				   Cache::instance()->set($name, array('set_key'=>1, 'key'=>$identifier), $delay);
+				   //Log::instance()->add(Log::NOTICE, '889 :key входной фильтр от повтора номера. Эту отметка не получали давно. Фиксирую в мьютексе и продолжаю обработку.', array(':key'=>$identifier, ':name'=>$cacheName.'_'.$identifier)); 
+				return true;
+			   }
+		
+		}
+		
+		
+		
+		
+		
 }

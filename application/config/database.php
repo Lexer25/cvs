@@ -11,6 +11,25 @@ return array
 		'charset'   => 'windows-1251',
 		)
 	),
+		
+	
+	'parkresident' => array(
+		'type'			=> 'pdo',
+		'connection'	=> array(
+		'dsn'		=> 'odbc:PARKRESIDENT',
+		'charset'   => 'windows-1251',
+		)
+	),
+		
+	
+	'pr' => array(// сокращение от passofficeconfig
+		'type'       => 'pdo',
+		'connection' => array(
+       		'dsn'        => 'sqlite:'.APPPATH .'\\Config\\parkresident.sqlite',
+			'persistent' => FALSE,
+		)),
+		
+		
 	
 );
 

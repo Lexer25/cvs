@@ -60,6 +60,65 @@ class Controller_Dashboard extends Controller{
 	}
 	
 	
+	/**21.08.2025 фукнция key принимает запросы по протоколу POST
+	* выполняет первичный анализ номеров. если номер в базе данных, то фиксирует его в хранилище.
+	* если номера нет в базе данных, не фиксирует его в хранилище
+	*/
+	public function action_key()
+	{
+		//принятый пакет сохраняю в базу данных
+		//key - номер и тип идентификатора
+		//gate - номер ворот
+		//первичные данные проходят проверку, на выходе проверки получаем 
+		//$identifier - полученный номер,  
+		//$id_gate - номер ворот
+		
+		$identifier = '33223322'; 
+		$id_gate=3;
+		
+		$cvss=Model::factory('cvss');
+		$repeatFilter='repeatFilter';
+		
+		if(!$cvss->repeatFilter($identifier, $repeatFilter))
+		{
+		  // повтор номера. выхожу из обработки
+		  Log::instance()->add(Log::NOTICE, '82 :key входной фильтр от повтора номера. Повторный прием идентификатора key :key. Можно не обрабатывать.', 
+						array(':key'=>$identifier)); 
+			$result=9;
+			
+		} else {
+			//продолжаю обработку полученного идентификатора
+			Log::instance()->add(Log::NOTICE, '89 :key входной фильтр от повтора номера. Прием идентификатора key :key. Продолжаю обработку.', array(':key'=>$identifier)); 
+			
+			Log::instance()->add(Log::NOTICE, '93 :key start mainAnalysis.', array(':key'=>$identifier));
+	//============== Главное! анализ!!! ==============================		
+			$key=new Identifier($identifier);
+			$cvs=new phpCVS($id_gate);
+			$result=Model::factory('cvss')->mainAnalysis($key,  $cvs);
+	//===================================================================
+			Log::instance()->add(Log::NOTICE, '99 :key gate :gate garage :garage stop mainAnalysis с результатом :result.', array(':key'=>$key->id, ':result'=> $result, ':gate'=>$cvs->id_gate, ':garage'=>$key->id_garage));
+				   
+		}			
+			  
+			  
+		
+		
+		// Model::factory('cvss')->saveKeyFromGate($identifier, $id_gate);//сохраняю 
+		// Model::factory('cvss')->common( $identifier,  $id_gate);//выполняю обработку полученного идентификатор
+		$this->redirect('dashboard');
+	}
+	
+	public function action_loop()
+	{
+		//пришел сигнал от индуктивной петли - значит, машина перед воротами, надо смотреть какие сигналы пришли по этим воротам.
+		//при этом возможен вариант, что за последние Х секунд было получено несколько UHF и ГРЗ.
+		//значит, тут надо получать массив сигналов, которые уже прошли проверки и они есть в базе данных СКУД.
+		$id_gate=3;
+		$_data=Model::factory('svss')->getKeyFromGate($id_gate);
+		Model::factory('cvss')->common( $identifier,  $id_gate);
+		$this->redirect('dashboard');
+		
+	}
 	
 	public function action_index()
 	{	
@@ -67,11 +126,10 @@ class Controller_Dashboard extends Controller{
 		$mess.='www.artsec.ru<br>';
 		$mess.='2022-'.date("Y").'<br>';
 		$mess.='Ver:'.Kohana::$config->load('config')->ver.'<br>';
-		$mess.=HTML::anchor('guide', 'guide');
+		$mess.=HTML::anchor('guide', 'guide').'<br>';
+		$mess.=HTML::anchor('dashboard/key', 'uhf').'<br>';
+		$mess.=HTML::anchor('dashboard/loop', 'loop');
 		$this->response->body($mess);
-		
-			
-		
 		
 		$content = View::factory('dashboard', array(
 			//'garageLst'=>$garageLst,
