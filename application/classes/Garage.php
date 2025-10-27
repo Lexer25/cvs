@@ -11,8 +11,9 @@ class Garage
     public $id;        //id гаража
     public $name;        //название гаража
     public $placeCount;//количество машиномест в гараже
-    public $placeCountUccuped;//количество занятых машиномест
+  //  public $placeCountUccuped;//количество занятых машиномест
     public $id_parking=array();//список парковочных площадей, на которых находятся места гаража
+    public $not_count=false;//false - посдчет количества свободных мест ВЕДЕТСЯ, true - НЕ ведется.
     
 	
 	public $grzIn=array();//список грз, находящихся внутри
@@ -23,25 +24,22 @@ class Garage
   
     public function __construct($id)// id_gate - номер гаража
     {
-      /*  $sql='select hlp.tablo_ip, 
-					hlp.tablo_port,
-					hlp.box_ip,
-					hlp.box_port,
-					hlp.id_gate,
-					hlp.id_dev,
-					hlp.mode,
-					hlp.id_parking,
-					hlp.is_enter,
-					hlp.is_enter from hl_param hlp where hlp.id_cam='.$cam;
-					echo Debug::vars('40', $sql);exit;
+       $sql='select first 1 hlgn.name, hlgn.not_count, hlgn.div_code, count(hlg.id_place) as placeCount from hl_garagename hlgn
+			join hl_garage hlg on hlg.id_garagename=hlgn.id
+			where hlgn.id='.$id.'
+			group by hlgn.name, hlgn.not_count, hlgn.div_code';
+			//echo Debug::vars('40', $sql);exit;
 					
-	   $query = DB::query(Database::SELECT, $sql)
+	   $query = Arr::flatten(DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
-			->as_array(); */
-			
+			->as_array()
+			);
+		Log::instance()->add(Log::NOTICE, '37 garage'. Debug::vars($query));
 					$this->id=$id; 
-					$this->placeCount=3; 
-					$this->placeCountUccuped=2; 
+					$this->placeCount=Arr::get($query, 'PLACECOUNT'); 
+					$this->name=Arr::get($query, 'NAME'); 
+					$this->not_count=Arr::get($query, 'NOT_COUNT'); 
+				//	$this->placeCountUccuped=2; 
 					$this->id_parking=$this->id_parking();
 
 			return;

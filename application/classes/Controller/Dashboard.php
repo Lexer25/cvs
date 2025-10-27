@@ -60,65 +60,6 @@ class Controller_Dashboard extends Controller{
 	}
 	
 	
-	/**21.08.2025 фукнция key принимает запросы по протоколу POST
-	* выполняет первичный анализ номеров. если номер в базе данных, то фиксирует его в хранилище.
-	* если номера нет в базе данных, не фиксирует его в хранилище
-	*/
-	public function action_key()
-	{
-		//принятый пакет сохраняю в базу данных
-		//key - номер и тип идентификатора
-		//gate - номер ворот
-		//первичные данные проходят проверку, на выходе проверки получаем 
-		//$identifier - полученный номер,  
-		//$id_gate - номер ворот
-		
-		$identifier = '33223322'; 
-		$id_gate=3;
-		
-		$cvss=Model::factory('cvss');
-		$repeatFilter='repeatFilter';
-		
-		if(!$cvss->repeatFilter($identifier, $repeatFilter))
-		{
-		  // повтор номера. выхожу из обработки
-		  Log::instance()->add(Log::NOTICE, '82 :key входной фильтр от повтора номера. Повторный прием идентификатора key :key. Можно не обрабатывать.', 
-						array(':key'=>$identifier)); 
-			$result=9;
-			
-		} else {
-			//продолжаю обработку полученного идентификатора
-			Log::instance()->add(Log::NOTICE, '89 :key входной фильтр от повтора номера. Прием идентификатора key :key. Продолжаю обработку.', array(':key'=>$identifier)); 
-			
-			Log::instance()->add(Log::NOTICE, '93 :key start mainAnalysis.', array(':key'=>$identifier));
-	//============== Главное! анализ!!! ==============================		
-			$key=new Identifier($identifier);
-			$cvs=new phpCVS($id_gate);
-			$result=Model::factory('cvss')->mainAnalysis($key,  $cvs);
-	//===================================================================
-			Log::instance()->add(Log::NOTICE, '99 :key gate :gate garage :garage stop mainAnalysis с результатом :result.', array(':key'=>$key->id, ':result'=> $result, ':gate'=>$cvs->id_gate, ':garage'=>$key->id_garage));
-				   
-		}			
-			  
-			  
-		
-		
-		// Model::factory('cvss')->saveKeyFromGate($identifier, $id_gate);//сохраняю 
-		// Model::factory('cvss')->common( $identifier,  $id_gate);//выполняю обработку полученного идентификатор
-		$this->redirect('dashboard');
-	}
-	
-	public function action_loop()
-	{
-		//пришел сигнал от индуктивной петли - значит, машина перед воротами, надо смотреть какие сигналы пришли по этим воротам.
-		//при этом возможен вариант, что за последние Х секунд было получено несколько UHF и ГРЗ.
-		//значит, тут надо получать массив сигналов, которые уже прошли проверки и они есть в базе данных СКУД.
-		$id_gate=3;
-		$_data=Model::factory('svss')->getKeyFromGate($id_gate);
-		Model::factory('cvss')->common( $identifier,  $id_gate);
-		$this->redirect('dashboard');
-		
-	}
 	
 	public function action_index()
 	{	
@@ -126,10 +67,11 @@ class Controller_Dashboard extends Controller{
 		$mess.='www.artsec.ru<br>';
 		$mess.='2022-'.date("Y").'<br>';
 		$mess.='Ver:'.Kohana::$config->load('config')->ver.'<br>';
-		$mess.=HTML::anchor('guide', 'guide').'<br>';
-		$mess.=HTML::anchor('dashboard/key', 'uhf').'<br>';
-		$mess.=HTML::anchor('dashboard/loop', 'loop');
+		$mess.=HTML::anchor('guide', 'guide');
 		$this->response->body($mess);
+		
+			
+		
 		
 		$content = View::factory('dashboard', array(
 			//'garageLst'=>$garageLst,
@@ -160,8 +102,47 @@ class Controller_Dashboard extends Controller{
 		$input_data = $input_data_0;
 		
 		Log::instance()->add(Log::NOTICE, '114 MPT получил данные :data', array(':data'=>Debug::vars($input_data)));
-		//Log::instance()->add(Log::NOTICE, '81 Получил данные UHF '. Debug::vars($input_data));
+
 		$post=Validation::factory($input_data);
+		if(Arr::get($post, 'type') == 'input'){
+			//case 'input'://это сигнал от индуктивной петли. Надо зафиксироват событие
+				Log::instance()->add(Log::NOTICE, '109 changeLoop pin :pin ip :ip ch :ch  state :state', array(':ip'=> Arr::get($post, 'ip'), ':ch'=> Arr::get($post, 'pin'), ':state'=> Arr::get($post, 'state')));
+				//вызов обработчика сигнала индуктивной петли.
+				switch(Arr::get($post, 'pin')){
+						case 'INPUT2':
+							$ch=0;
+						break;
+						case 'INPUT3':
+							$ch=1;
+						break;
+					
+					
+				}
+				$id_gate=Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip'), $ch);
+				Model::factory('cvss')->loophandler($id_gate);
+					switch(Arr::get($post, 'state')){
+						case 0:
+							$eventCode=Events::LOOP0;
+						break;
+						case 1:
+							$eventCode=Events::LOOP1;
+						break;
+						
+					}
+					$events= new Events();
+					//$events->grz=null;
+					$events->id_gate=$id_gate;
+					//$events->is_enter=null;
+					$events->eventCode=$eventCode;
+			$events->addEventRow(); 
+			Log::instance()->add(Log::NOTICE, '138 save events loop eventCode :eventCode', array(':eventCode'=> $eventCode));
+			//break;
+			
+			//завершаю обработку 
+			Log::instance()->add(Log::NOTICE, '999-142 stop UHF total_time  :data', array(':data'=>(microtime(true) - $t1)));
+			exit;
+			
+		}
 		$post->rule('ch', 'not_empty')//номер канала должен быть 
 					->rule('ch', 'digit')
 					->rule('ip', 'not_empty')//IP контроллера должен быть
@@ -180,6 +161,15 @@ class Controller_Dashboard extends Controller{
 			//$this->response->status(400);
 			return;
 		}
+		
+		//29.08.2025 check loop
+		
+			$mpt2=new phpMPTtcp(Arr::get($post, 'ip'),8000);
+			$mpt2->command='getPortState';
+			$mpt2->execute();
+			Log::instance()->add(Log::NOTICE, '133 poststate key :key ip :ip ch :ch  state :data', array(':data'=> bin2hex($mpt2->answer), ':ip'=> Arr::get($post, 'ip'), ':key'=> Arr::get($post, 'key'), ':ch'=> Arr::get($post, 'ch')));
+		
+		
 		//формирую основые переменные
 		$id_gate=Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip'), Arr::get($post, 'ch'));
 		
@@ -207,6 +197,8 @@ class Controller_Dashboard extends Controller{
 		//переход к основной обработке
 		
 		Model::factory('cvss')->common( $identifier,  $id_gate);
+		
+		
 		
 	}
 	
@@ -243,9 +235,9 @@ class Controller_Dashboard extends Controller{
 		}
 		//формирую основные переменные
 		$id_gate = Model::factory('mpt')->getIdGateFromCam(Arr::get($input_data, 'camera'));//получил номер ворот
-		//$cvs=new phpCVS($id_gate);
-		//$identifier=new Identifier(Arr::get($input_data, 'plate'));//передаю ГРЗ в модель);
-		$identifier=Arr::get($input_data, 'plate');//передаю ГРЗ в модель);
+
+		$identifier=Arr::get($input_data, 'plate');
+		Log::instance()->add(Log::NOTICE, '999-240 validate CVS :plate total_time  :data', array(':data'=>(microtime(true) - $t1), ':plate'=>$identifier));
 		
 		
 		$_data=array(':id_gate'=>$id_gate, 
@@ -261,11 +253,11 @@ class Controller_Dashboard extends Controller{
 		//Model::factory('cvss')->common( $identifier,  $cvs);
 		Model::factory('cvss')->common( $identifier,  $id_gate);
 	
-		
+		Log::instance()->add(Log::NOTICE, '999-256 stop CVS :plate total_time  :data', array(':data'=>(microtime(true) - $t1), ':plate'=>$identifier));
 		
 	}
 	
-		/**20.07.2025 Открытие ворот по http команде
+	/**20.07.2025 Открытие ворот по http команде
 	*
 	*
 	*/
@@ -277,6 +269,10 @@ class Controller_Dashboard extends Controller{
 		Log::instance()->add(Log::NOTICE, '489 '. Debug::vars($_POST));
 		//Log::instance()->add(Log::NOTICE, '490 '. Debug::vars($input_data_0));
 		$id_gate=Arr::get($_POST, 'id');
+		
+				
+		//$id_gate=Arr::get($_POST, 'id');
+		//$id_gate=Arr::get($input_data_0, 'id');
 		
 		
 		$cvs=new phpCVS($id_gate);// сделал экземпляр, чтобы получить IP, port, и номер канала ch
@@ -296,10 +292,69 @@ class Controller_Dashboard extends Controller{
 	}
 		
 		
+	/**13.10.2025 Открытие ворот по команде от бота
+	*
+	*
+	*/
+	public function action_opengateBot()
+	{
 		
-						
 		
-		    public function after()
+		/* //$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
+		Log::instance()->add(Log::NOTICE, '489 '. Debug::vars($_POST));
+		//Log::instance()->add(Log::NOTICE, '490 '. Debug::vars($input_data_0));
+		$id_gate=Arr::get($_POST, 'id'); */
+		
+		$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
+		Log::instance()->add(Log::NOTICE, '225 action_opengate получил '. Debug::vars($_POST));
+		//Log::instance()->add(Log::NOTICE, '226 action_opengate получил '. Debug::vars(file_get_contents('php://input'), true));
+		Log::instance()->add(Log::NOTICE, '490 -0'. Debug::vars($input_data_0));
+		
+		//$id_gate=Arr::get($_POST, 'id');
+		$id_gate=Arr::get($input_data_0, 'id');
+		
+		
+		$cvs=new phpCVS($id_gate);// сделал экземпляр, чтобы получить IP, port, и номер канала ch
+		
+		$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
+		$result=$mpt->openGate($cvs->ch);// даю команду открыть ворота. Результат может быть разный: от  подключения к контроллера до ошибки в протоколе.
+		
+		Log::instance()->add(Log::NOTICE, '499 открыл ворота id=:id ip=:ip port=:port ch=:ch', array(':id'=>$id_gate, ':ip'=>$cvs->box_ip, ':port'=>$cvs->box_port, ':ch'=>$cvs->ch));
+		Log::instance()->add(Log::NOTICE, '414 результат выполнения команды открытия ворот :res', array(':res'=>Debug::vars($result)));
+		//надо вернуть ответ
+		$this->response
+            ->headers('Content-Type', 'application/json')
+            ->body(json_encode($result));
+		
+		//послать команду Открыть дверь.
+	}
+		
+		
+		/**20.10.2025 ping pong
+	*
+	*
+	*/
+	public function action_checkBot(){}
+		
+	/**20.10.2025 Получение id и name всех ворот
+	*
+	*
+	*/
+	public function action_getGatesList()
+	{
+		Log::instance()->add(Log::NOTICE, "340 action_getGatesList");
+		
+		
+		$result=Model::factory('cvss')->getGatesList();
+		//echo Debug::vars('358', $result);//exit;
+		//echo Debug::vars('358', json_encode($result));exit;
+		
+		$this->response
+            ->body(json_encode($result));
+
+	}					
+		
+	public function after()
     {
       // Cache::instance()->garbage_collect();
     }
