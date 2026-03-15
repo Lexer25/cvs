@@ -135,48 +135,38 @@ public function getMessForIdle()
 	 return;
  }
  
-		public function  get_info_gate($id_gate)//получить информацию о воротах 
-			{
-				$res=array();
-				$res=array();
-				$sql='select  
-					hlp.id,
-					hlp.id_parking,
-					hlp.is_enter,
-					hlp.name,
-					hlp.tablo_ip, 
-					hlp.tablo_port, 
-					hlp.box_ip, 
-					hlp.box_port, 
-					hlp.id_cam, 
-					hlp.id_dev, 
-					hlp.channel,
-					hlp.mode from HL_PARAM hlp
-					where hlp.id='.$id_gate;
-				
-				$query = DB::query(Database::SELECT, $sql)
-					->execute(Database::instance('fb'))
-					->as_array();
-				$res=array();
-				foreach ($query as $key => $value)
-				{
-					$res['id']=Arr::get($value, 'ID');
-					$res['id_parking']=Arr::get($value,'ID_PARKING');
-					$res['name']=iconv('windows-1251','UTF-8',Arr::get($value,'NAME'));
-					$res['is_enter']=Arr::get($value,'IS_ENTER');
-					$res['tablo_ip']=Arr::get($value,'TABLO_IP');
-					$res['tablo_port']=Arr::get($value,'TABLO_PORT');
-					$res['box_ip']=Arr::get($value,'BOX_IP');
-					$res['box_ip']=Arr::get($value,'BOX_IP');
-					$res['box_port']=Arr::get($value,'BOX_PORT');
-					$res['id_cam']=Arr::get($value,'ID_CAM');
-					$res['id_dev']=Arr::get($value,'ID_DEV');
-					$res['mode']=Arr::get($value,'MODE');
-					$res['channel']=Arr::get($value,'CHANNEL');
-				}
-				return $res;	
-				
-			}
+ /*
+ установка семафора для синхронизации работы систем.
+ $semaforName - имя семаформа
+$data - содержимое семафора
+ 
+ */
+/* public function setSemafor($semaforName, $data)
+ {
+		$fp = fopen($semaforName, "w"); // Открываем файл в режиме записи	
+		$test = fwrite($fp, $data); // Запись в файл
+		fclose($fp); //Закрытие файла
+		
+	 return;
+ }
+  */
+ 
+
+ /*
+ прочитать семафора для синхронизации работы систем.
+ $semaforName - имя семаформа
+$data - содержимое семафора
+ 
+ */
+/* public function getSemafor($semaforName)
+ {
+		$handle = fopen($semaforName, "r");
+		$contents = fread($handle, filesize($semaforName));
+		fclose($handle);
+		
+	 return $contents;
+ }
+  */
  
 
 

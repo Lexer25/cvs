@@ -1,0 +1,1 @@
+C:\xampp\php\php.exe c:\xampp\htdocs\totcon\modules\minion\minion --task=checkEventsToMqtt
