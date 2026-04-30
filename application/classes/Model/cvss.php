@@ -195,7 +195,7 @@ class Model_Cvss extends Model {
 			//результат анализа:
 			//-въезд разрешен (т.е. места есть).
 			//въезд запрещен (т.е. мест нет)
-			Log::instance()->add(Log::NOTICE, '727 garage'. Debug::vars($garage));
+			//Log::instance()->add(Log::NOTICE, '727 garage'. Debug::vars($garage));
 			if(!$cvs->checkAccess($garage->id_parking)){ //тут $garage->id_parking - список парковок, на которых расположены машиноместа гаража
 				//ворота, куда подъехал автомобиль, не содержит парковочных мест гаража, разрешенных этому ГРЗ.
 				//въезд запрещен
@@ -400,7 +400,7 @@ class Model_Cvss extends Model {
 					Log::instance()->add(Log::NOTICE, '138 Событие 50. Не смог открыть ворота в течении 10 попыток. Видеокамера '.$cvs->cam.' ('.$direct.') ГРЗ '.$identifier->id.' контролер IP='.$cvs->box_ip.':'.$cvs->box_port.' Режим шлюза '.$cvs->mode.' Ответ '.$mpt->result.' edesc '.$mpt->edesc);		
 				} else 
 				{
-					Log::instance()->add(Log::NOTICE, '004_64 Событие 50. Ответ контроллера после повторной команды '.$mpt->result.' edesc '.$mpt->edesc.'  после '. $i .' попыток.');	
+					//Log::instance()->add(Log::NOTICE, '004_64 Событие 50. Ответ контроллера после повторной команды '.$mpt->result.' edesc '.$mpt->edesc.'  после '. $i .' попыток.');	
 					
 						//Ворота открылись успешно, надо добавлять ГРЗ в таблицу inside в зависиммочти от направления движения
 						
@@ -469,6 +469,8 @@ class Model_Cvss extends Model {
 					//работаю только с табло
 				$tablo->command='clearTablo';
 				if(!Arr::get($config, 'debug')) $tablo->execute(); 	
+				
+				//Log::instance()->add(Log::NOTICE, '173-0 Ответ от табло '.Debug::vars($tablo));		
 				//Log::instance()->add(Log::NOTICE, '173 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 							
 				
@@ -569,7 +571,7 @@ class Model_Cvss extends Model {
 			$events->is_enter=$cvs->isEnter;
 			if(!is_null($identifier->id_garage)) $events->id_garage=$identifier->id_garage;//номер гаража
 			
-			Log::instance()->add(Log::NOTICE, '777-000 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
+			//Log::instance()->add(Log::NOTICE, '777-000 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
 					
 	//Фильтр от повтора
 			  
@@ -596,7 +598,7 @@ class Model_Cvss extends Model {
 				   Log::instance()->add(Log::NOTICE, '267 :key входной фильтр от повтора номера. нет мьютекс :name. Значит эту отметка не получали давно. Фиксирую в мьютексе и продолжаю обработку.', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
 			  
 			   }
-			Log::instance()->add(Log::NOTICE, '777-001 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025     
+			//Log::instance()->add(Log::NOTICE, '777-001 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025     
 			   //проверка: не находится ли ворота во временной блокировке? Это актуально для реверсивных ворот
 			   //в это время любые данные UHF и ГРЗ игнорируются.
 			   if (Cache::instance()->get('gateBlock_'.$cvs->id_gate))
@@ -615,7 +617,7 @@ class Model_Cvss extends Model {
 					exit;
 				
 			   }
-			   Log::instance()->add(Log::NOTICE, '777-003 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
+			   //Log::instance()->add(Log::NOTICE, '777-003 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
 			   
 			   Log::instance()->add(Log::NOTICE, '246 :key не найден мьютекс :name. Значит ворота не в режиме блокировки.', array(':key'=>$identifier->id, ':name'=>'gateBlock_'.$cvs->id_gate)); 
 			   //проверка: а не идут ли тут друг за другом идентификаторы, которые сразу попали в поле антенны?
@@ -630,7 +632,7 @@ class Model_Cvss extends Model {
 							'isEnter'=>$cvs->isEnter,
 							); */
 			
-			Log::instance()->add(Log::NOTICE, '777-004 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
+			//Log::instance()->add(Log::NOTICE, '777-004 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
 			
 			if(Arr::get($_data, 'id_gate') == $cvs->id_gate)
 			{
@@ -641,12 +643,12 @@ class Model_Cvss extends Model {
 				// - если гараж принадлежит ранее проехавшему автомобилю
 				// - если номер не валиден либо не имеет право на проезд 12.08.2025 г.
 				
-				 Log::instance()->add(Log::NOTICE, '634-0 :key паровозик identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
-				 Log::instance()->add(Log::NOTICE, '634-1 :key паровозик cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
+				 //Log::instance()->add(Log::NOTICE, '634-0 :key паровозик identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
+				 //Log::instance()->add(Log::NOTICE, '634-1 :key паровозик cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
 		
 				 $result=Events::ANALYSERBUSY;//код 7 - процесс занят
 				 
-				  Log::instance()->add(Log::NOTICE, '285 :key найден мьютекс :name :data', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
+				  //Log::instance()->add(Log::NOTICE, '285 :key найден мьютекс :name :data', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 								
 					if(Arr::get($_data, 'key') == $identifier->id)
 					{
@@ -685,9 +687,9 @@ class Model_Cvss extends Model {
 					
 			}		
 			
-			Log::instance()->add(Log::NOTICE, '777-005 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
+			//Log::instance()->add(Log::NOTICE, '777-005 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
 			//} else {
-				Log::instance()->add(Log::NOTICE, '297 :key НЕ найден мьютекс :name. Значит на этих воротах идентификатор не обрабатывается в параллельном потоке.', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
+				//Log::instance()->add(Log::NOTICE, '297 :key НЕ найден мьютекс :name. Значит на этих воротах идентификатор не обрабатывается в параллельном потоке.', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 				
 					Log::instance()->add(Log::NOTICE, '274 :key start mainAnalysis.', array(':key'=>$identifier->id));
 					//============== Главное! анализ!!! ==============================		
@@ -704,8 +706,11 @@ class Model_Cvss extends Model {
 			
 			//сохраняю идентификатора в кеше для защиты от повторной обработки
 					
-			Log::instance()->add(Log::NOTICE, '777-006 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025  		
+			//Log::instance()->add(Log::NOTICE, '777-006 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025  		
 			//делаю набор условий для последующей обработки. Если результат 50 (можно проезжать), то жду 30 секунд.
+					$_keyList=Garage::getListIdentifierOnGarage($cvs->id_gate, $identifier->id_garage);
+					Log::instance()->add(Log::DEBUG, '712-0 '.Debug::vars($_keyList));
+					$events->comment='inside '.$_keyList;
 				switch($result){
 					case 81:
 					case 50:
@@ -722,10 +727,11 @@ class Model_Cvss extends Model {
 					break;
 					default:
 								
-						break;
+		
+					break;
 				}
 				
-Log::instance()->add(Log::NOTICE, '777-007 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 				
+//Log::instance()->add(Log::NOTICE, '777-007 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 				
 //============================== ???		 			
 			Log::instance()->add(Log::NOTICE, '318 :key mutex перед gateControl имеет значение  :mutex.', 
 				array(
@@ -752,7 +758,7 @@ Log::instance()->add(Log::NOTICE, '777-007 check_time :check_time ', array(':che
 		
 //============== управление воротами ========================================			
 			//перехожу к управлению воротами
-	Log::instance()->add(Log::NOTICE, '777-008 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 	
+	//Log::instance()->add(Log::NOTICE, '777-008 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 	
 	
 	Model::factory('cvss')->gateControl($identifier, $cvs);
 		Log::instance()->add(Log::NOTICE, "335 :key Stop gate=:gate, code_validation=:code, total_time=:tt", array(
@@ -763,7 +769,7 @@ Log::instance()->add(Log::NOTICE, '777-007 check_time :check_time ', array(':che
 			));	
 		//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
 		Log::instance()->add(Log::NOTICE, '337 end debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>$identifier->id));
-	Log::instance()->add(Log::NOTICE, '777-009 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 	
+	//Log::instance()->add(Log::NOTICE, '777-009 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 	
 		return;
 			
 		}
@@ -842,7 +848,7 @@ Log::instance()->add(Log::NOTICE, '777-007 check_time :check_time ', array(':che
 		
 		public function loophandler($id_gate)
 		{
-			Log::instance()->add(Log::DEBUG, 'Line 833 loophandler :data. ', array(':data'=>$id_gate));
+			//Log::instance()->add(Log::DEBUG, 'Line 833 loophandler :data. ', array(':data'=>$id_gate));
 			/* $events= new Events();
 			$events->grz=null;
 			$events->id_gate=$id_gate;

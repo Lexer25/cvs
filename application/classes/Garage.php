@@ -34,7 +34,7 @@ class Garage
 			->execute(Database::instance('fb'))
 			->as_array()
 			);
-		Log::instance()->add(Log::NOTICE, '37 garage'. Debug::vars($query));
+		//Log::instance()->add(Log::NOTICE, '37 garage'. Debug::vars($query));
 					$this->id=$id; 
 					$this->placeCount=Arr::get($query, 'PLACECOUNT'); 
 					$this->name=Arr::get($query, 'NAME'); 
@@ -83,6 +83,7 @@ class Garage
 			where hlg.id_garagename='.$this->id.'
 			and hlp.id_parking='.$id_place;
 		//	echo Debug::vars('53', $sql);exit;
+		//Log::instance()->add(Log::NOTICE, '86 '. $sql);
 		//Log::instance()->add(Log::NOTICE, '78 '.$sql);
 		$query = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
@@ -91,9 +92,68 @@ class Garage
 		return $query;
     }
 	
+		
+		//30.04.2026 получить список ГРЗ и UHF, находящихся в этом гараже
+		public static function getListIdentifierOnGarage($gate, $garage)
+		//public function getListIdentifierOnGarage()
+		{
+			 					
+			$sql_details='select hli.id_card from hl_inside hli
+                    join people p on p.id_pep=hli.id_pep
+                    join hl_orgaccess hlo on hlo.id_org=p.id_org
+                    join hl_param hlp on hli.counterid=hlp.id_parking
+                    where hlp.id='.$gate.'
+                    and hlo.id_garage='.$garage;
+					
+    Log::instance()->add(Log::NOTICE, "105 ". $sql_details);
+			$query = DB::query(Database::SELECT, $sql_details)
+				->execute(Database::instance('fb'))
+				->as_array(); 
 	
-	
+	 if (empty($query)) {
+        return ''; // Или вернуть пустую строку
+    }
+    
+    // Формируем строку с перечнем ID_CARD в кавычках
+    $ids = array_column($query, 'ID_CARD');
+    $result = '"' . implode('", "', $ids) . '"';
+    
+    return $result;
+			
+		}
 		public function getPlaceCountUccuped($id_place)//подсчет количества занятых мест на указанной площадке для текущего гаража
+{
+    // Подсчет количества занятых мест
+    $sql = 'select count(hli.id_pep) from hl_inside hli
+            join people p on p.id_pep=hli.id_pep
+            join hl_orgaccess hlo on hlo.id_org=p.id_org
+            where hli.counterid='.$id_place.'
+            and hlo.id_garage='.$this->id;	
+    
+    $query = DB::query(Database::SELECT, $sql)
+        ->execute(Database::instance('fb'))
+        ->get('COUNT');
+    
+    // Логирование детальной информации о занятых местах
+    $sql_details = 'select hli.* from hl_inside hli
+                    join people p on p.id_pep=hli.id_pep
+                    join hl_orgaccess hlo on hlo.id_org=p.id_org
+                    where hli.counterid='.$id_place.'
+                    and hlo.id_garage='.$this->id;
+    
+    $details_query = DB::query(Database::SELECT, $sql_details)
+        ->execute(Database::instance('fb'))
+        ->as_array();
+    
+    // Запись в лог-файл
+    Log::instance()->add(Log::NOTICE, '122 getPlaceCountUccuped для гаража ID='.$this->id.', площадка ID='.$id_place.
+        ' | Количество занятых мест: '.$query.
+        ' | Детализация: '.Debug::vars($details_query));
+    
+    return $query;
+}
+		
+		public function getPlaceCountUccuped_0($id_place)//подсчет количества занятых мест на указанной площадке для текущего гаража
 			{
 				$sql='select count(hli.id_pep) from hl_inside hli
 						join people p on p.id_pep=hli.id_pep
@@ -101,6 +161,7 @@ class Garage
 						where hli.counterid='.$id_place.'
 						and hlo.id_garage='.$this->id;	
 				//	echo Debug::vars('53', $sql);exit;
+				Log::instance()->add(Log::NOTICE, '105 '. $sql);
 				$query = DB::query(Database::SELECT, $sql)
 					->execute(Database::instance('fb'))
 					->get('COUNT');

@@ -1,4 +1,19 @@
 Пакет CVS - набор скриптов для интграции с CVS.
+Вер. 2.8
+30.04.2026
+[*]
+ триггере TRIGGER EVENTS_PARKING_HL FOR EVENTS надо заменить строку select hlp.id_parking, hlp.is_enter from  hl_param hlp
+            where hlp.id_dev=new.id_dev into :pID, :IsEnter; на  select distinct hlp.id_parking, hlp.is_enter from  hl_param hlp
+            where hlp.id_dev=new.id_dev into :pID, :IsEnter;
+			дело в том, что на въезд стоят 2 видеокамеры, и обе привязаны к одному гейту. SQL в ответ выдает два одинаковых числа, и триггер выдает ошибку multi...
+[+]
+C:\xampp\htdocs\cvs\application\classes\Model\cvss.php перед записью события берет список ГРЗ и UHF, уже находящихся в гараже, и записывает в базу данных. Теперь в журнале событий видно, какие идентификаторы находились в гараже.
+C:\xampp\htdocs\cvs\application\classes\Garage.php добавлены:
+1. метод public static function getListIdentifierOnGarage($gate, $garage) - список идентификаторов, находящихся в гараже
+2. в метод public function getPlaceCountUccuped($id_place) добавлено логирование списка идентификаторов, находящихся в гараже. Список выводится в лог-файл.
+3. C:\xampp\htdocs\cvs\application\classes\Log\File.php автоматический контроль количества лог-файлов. Старые лог-файлы удаляются.
+
+			
 Вер. 2.4
 10.08.2025
 [+]
