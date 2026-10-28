@@ -112,8 +112,23 @@ class Model_Cvss extends Model {
 	/**20.07/2025 основной модуль анализа разрешения на въезд
 	* события 
 	*
+	*
+	const UNKNOWNCARD=1;
+		const DISABLEDCARD=2;
+		const CARDEXPIRED=3;
+		const DISABLEDUSER=4;
+		const ACCESSDENIED=5;
+		const VALID=0;
+		
+	const CARLIMITEXCEEDED=81;//нет мест
+				const UNKNOWNCARD=46;//неизвестная карта
+				const DISABLEDCARD=65;//карта неактивна
+				const CARDEXPIRED=65;//срок действия карты истек
+				const DISABLEDUSER=65;//пользователь неактивен
+				const ACCESSDENIED=65;//доступ запрещен
+				const DISABLEDCARD=40;//идентификатор неактивный
+		
 	*/
-	//
 	
 	public function mainAnalysis(Identifier $identifier, phpCVS $cvs)
 	{
@@ -135,7 +150,29 @@ class Model_Cvss extends Model {
 					':key'=>$identifier->id,
 					':status'=>$identifier->status
 					));
-			return Events::UNKNOWNCARD;
+	//echo Debug::vars('153', $identifier->status);exit;		
+			$result= Events::UNKNOWNCARD;
+			switch($identifier->status){
+				case Identifier::UNKNOWNCARD:
+					$result= Events::UNKNOWNCARD;
+				break;
+				case Identifier::DISABLEDCARD:
+					$result= Events::DISABLEDCARD;
+				break;
+				case Identifier::CARDEXPIRED:
+					$result= Events::CARDEXPIRED;
+				break;
+				case Identifier::DISABLEDUSER:
+					$result= Events::DISABLEDUSER;
+				break;
+				default:
+				
+				break;
+				
+			}
+			//$result = Events::DISABLEDCARD;
+			
+			return $result;
 			//exit;
 		} 
 		Log::instance()->add(Log::NOTICE, '132 :key identifier :key валидна status=:status, ворота :id_gate. Продолжаю обработку.',
@@ -572,6 +609,7 @@ class Model_Cvss extends Model {
 			if(!is_null($identifier->id_garage)) $events->id_garage=$identifier->id_garage;//номер гаража
 			
 			//Log::instance()->add(Log::NOTICE, '777-000 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
+	
 					
 	//Фильтр от повтора
 			  
@@ -599,7 +637,8 @@ class Model_Cvss extends Model {
 			  
 			   }
 			//Log::instance()->add(Log::NOTICE, '777-001 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025     
-			   //проверка: не находится ли ворота во временной блокировке? Это актуально для реверсивных ворот
+			  
+		//фильтр проверка: не находится ли ворота во временной блокировке? Это актуально для реверсивных ворот
 			   //в это время любые данные UHF и ГРЗ игнорируются.
 			   if (Cache::instance()->get('gateBlock_'.$cvs->id_gate))
 			   {
@@ -700,7 +739,7 @@ class Model_Cvss extends Model {
 			 //  }
 			   
 
-			
+			//echo Debug::vars('741', $result);exit;
 			$cvs->code_validation=$result;//передаю в модель результат валидации
 			$cvs->getMessForEvent($result);//формирую текстовое сообщение для табло
 			
@@ -708,12 +747,10 @@ class Model_Cvss extends Model {
 					
 			//Log::instance()->add(Log::NOTICE, '777-006 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025  		
 			//делаю набор условий для последующей обработки. Если результат 50 (можно проезжать), то жду 30 секунд.
-					$_keyList=Garage::getListIdentifierOnGarage($cvs->id_gate, $identifier->id_garage);
-					Log::instance()->add(Log::DEBUG, '712-0 '.Debug::vars($_keyList));
-					$events->comment='inside '.$_keyList;
+	
 				switch($result){
-					case 81:
-					case 50:
+					case 81://проезд разрешен
+					case 50://проезд разрешен
 						$_data=array(
 							'key'=>$identifier->id,
 							'id_pep'=>$identifier->id_pep,
@@ -724,6 +761,17 @@ class Model_Cvss extends Model {
 						$this->setMutexIdentifier('gate_'.$cvs->id_gate, $_data ); //если проезд разрешен, то фиксирую этот ГРЗ в мьютексе.
 						//Log::instance()->add(Log::NOTICE, '206 :key валидация прошла успешно, записал в mutex :name значение :data', array(':key'=>$identifier->id,':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 													
+					//break;
+					case 15://проезд запрещен...
+					case 16:
+					case 17:
+					case 18:
+					case 24:
+					case 81:
+							//записываю в комментарии к событию список идентификаторов, находящихся в этом гараже на этой парковочной площадке
+							$_keyList=Garage::getListIdentifierOnGarage($cvs->id_gate, $identifier->id_garage);
+							Log::instance()->add(Log::DEBUG, '712-0 '.Debug::vars($_keyList));
+							$events->comment='Внутри '.$_keyList;
 					break;
 					default:
 								
@@ -733,11 +781,11 @@ class Model_Cvss extends Model {
 				
 //Log::instance()->add(Log::NOTICE, '777-007 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 				
 //============================== ???		 			
-			Log::instance()->add(Log::NOTICE, '318 :key mutex перед gateControl имеет значение  :mutex.', 
+			/* Log::instance()->add(Log::NOTICE, '318 :key mutex перед gateControl имеет значение  :mutex.', 
 				array(
 					':key'=>$identifier->id, 
 					':mutex'=>Debug::vars($this->getMutexIdentifier('gate_'.$cvs->id_gate))));	
-			 
+			  */
 	
 					
 			//мьтекс введен с целью недопустить фиксацию двух машиномест при получении сразу двух идентификаторов от одного автомобиля на въезде		

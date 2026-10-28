@@ -22,8 +22,8 @@ class events {
 				
 				const CARLIMITEXCEEDED=81;//нет мест
 				const UNKNOWNCARD=46;//неизвестная карта
-				const DISABLEDCARD=65;//карта неактивна
-				const CARDEXPIRED=65;//срок действия карты истек
+				const DISABLEDCARD=40;//карта неактивна
+				const CARDEXPIRED=41;//срок действия карты истек
 				const DISABLEDUSER=65;//пользователь неактивен
 				const ACCESSDENIED=65;//доступ запрещен
 				
@@ -41,6 +41,15 @@ class events {
 				const UNKNOWNRESULT=-1;
 				const ANALYSERBUSY=7;
 				
+				
+				const LOOP0=19;//loop перешел в 0
+				const LOOP1=20;//loop перешел в 1
+				
+				
+				const evOpenDoorOperator=22;//оператор дал команду на открытие ворот
+				const evOpenDoorOperatorOk=23;//Команда evOpenDoorOperator выполнена успешно
+				const evOpenDoorOperatorErr=24;//Команда evOpenDoorOperator выполнена с ошибкой
+							
 				
 				
 				
@@ -86,7 +95,8 @@ class events {
 		//if(is_null($this->id_garage)) $this->id_garage = '\'NULL\'' ;
 		//Log::instance()->add(Log::NOTICE, '80  :data', array(':data'=>Debug::vars($this)));
 		
-		$_data=array(
+		
+			$_data=array(
 				':EVENT_CODE'=>$this->eventCode,
 				':EVENT_TIME'=>$this->event_time,
 				':IS_ENTER'=>$this->is_enter,

@@ -87,7 +87,7 @@ class Controller_Dashboard extends Controller{
 	
 	public function action_sendMPT()
 	{
-		Log::instance()->add(Log::NOTICE, "88 start UHF action_sendMPT");
+		Log::instance()->add(Log::NOTICE, "/r/n88 start UHF action_sendMPT");
 		$t1=microtime(1);
 		
 		//фиксирую полученные данные из $_OST в лог-файл
@@ -104,9 +104,11 @@ class Controller_Dashboard extends Controller{
 		Log::instance()->add(Log::NOTICE, '114 MPT получил данные :data', array(':data'=>Debug::vars($input_data)));
 
 		$post=Validation::factory($input_data);
+		
+		//case 'input'://это сигнал от индуктивной петли. Надо зафиксироват событие
 		if(Arr::get($post, 'type') == 'input'){
-			//case 'input'://это сигнал от индуктивной петли. Надо зафиксироват событие
-				Log::instance()->add(Log::NOTICE, '109 changeLoop pin :pin ip :ip ch :ch  state :state', array(':ip'=> Arr::get($post, 'ip'), ':ch'=> Arr::get($post, 'pin'), ':state'=> Arr::get($post, 'state')));
+			
+				
 				//вызов обработчика сигнала индуктивной петли.
 				switch(Arr::get($post, 'pin')){
 						case 'INPUT2':
@@ -118,6 +120,9 @@ class Controller_Dashboard extends Controller{
 					
 					
 				}
+				
+				//Log::instance()->add(Log::NOTICE, '109 changeLoop pin :pin ip :ip ch :ch  state :state', array(':ip'=> Arr::get($post, 'ip'), ':ch'=> Arr::get($post, 'pin'), ':state'=> Arr::get($post, 'state'), ':pin'=>$ch));
+				
 				$id_gate=Model_cvss::getGateFromBoxIp(Arr::get($post, 'ip'), $ch);
 				Model::factory('cvss')->loophandler($id_gate);
 					switch(Arr::get($post, 'state')){
@@ -134,12 +139,12 @@ class Controller_Dashboard extends Controller{
 					$events->id_gate=$id_gate;
 					//$events->is_enter=null;
 					$events->eventCode=$eventCode;
-			$events->addEventRow(); 
-			Log::instance()->add(Log::NOTICE, '138 save events loop eventCode :eventCode', array(':eventCode'=> $eventCode));
+			//$events->addEventRow(); 
+			//Log::instance()->add(Log::NOTICE, '138 save events loop eventCode :eventCode', array(':eventCode'=> $eventCode));
 			//break;
 			
 			//завершаю обработку 
-			Log::instance()->add(Log::NOTICE, '999-142 stop UHF total_time  :data', array(':data'=>(microtime(true) - $t1)));
+			//Log::instance()->add(Log::NOTICE, '999-142 stop UHF total_time  :data', array(':data'=>(microtime(true) - $t1)));
 			exit;
 			
 		}
@@ -207,7 +212,7 @@ class Controller_Dashboard extends Controller{
 	public function action_exec()
 	{
 		$t1=microtime(1);
-		Log::instance()->add(Log::NOTICE, '668 start CVS action_exec');
+		Log::instance()->add(Log::NOTICE, '/r/n668 start CVS action_exec');
 		//Log::instance()->add(Log::NOTICE, '665 debug :data', array(':data'=>(microtime(true) - $t1)));
 		$input_data_0=json_decode(file_get_contents('php://input'), true);//извлекаю данных из полученного пакета
 			
@@ -314,13 +319,29 @@ class Controller_Dashboard extends Controller{
 		$id_gate=Arr::get($input_data_0, 'id');
 		
 		
+		
+			//$eventCode=Events::LOOP1; $events->eventCode=$result;
+			$events= new Events();
+			$events->id_gate=$id_gate;
+			$events->eventCode=Events::evOpenDoorOperator;
+			$events->addEventRow();
+					
+					
 		$cvs=new phpCVS($id_gate);// сделал экземпляр, чтобы получить IP, port, и номер канала ch
 		
 		$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
 		$result=$mpt->openGate($cvs->ch);// даю команду открыть ворота. Результат может быть разный: от  подключения к контроллера до ошибки в протоколе.
 		
-		Log::instance()->add(Log::NOTICE, '499 открыл ворота id=:id ip=:ip port=:port ch=:ch', array(':id'=>$id_gate, ':ip'=>$cvs->box_ip, ':port'=>$cvs->box_port, ':ch'=>$cvs->ch));
-		Log::instance()->add(Log::NOTICE, '414 результат выполнения команды открытия ворот :res', array(':res'=>Debug::vars($result)));
+		Log::instance()->add(Log::NOTICE, '333 команда от бота открыть ворота id=:id ip=:ip port=:port ch=:ch', array(':id'=>$id_gate, ':ip'=>$cvs->box_ip, ':port'=>$cvs->box_port, ':ch'=>$cvs->ch));
+		//Log::instance()->add(Log::NOTICE, '334 результат выполнения команды открытия ворот :res', array(':res'=>Debug::vars($result)));
+		Log::instance()->add(Log::NOTICE, '335 результат выполнения команды открытия ворот :res', array(':res'=>$result->result));
+		if($result->result === 'OK') {
+			$events->eventCode=Events::evOpenDoorOperatorOk;
+		} else {
+			$events->eventCode=Events::evOpenDoorOperatorErr;
+		}
+		$events->addEventRow();
+		
 		//надо вернуть ответ
 		$this->response
             ->headers('Content-Type', 'application/json')
@@ -334,7 +355,11 @@ class Controller_Dashboard extends Controller{
 	*
 	*
 	*/
-	public function action_checkBot(){}
+	public function action_checkBot(){
+		
+		Log::instance()->add(Log::NOTICE, "342 action_checkBot");
+		
+	}
 		
 	/**20.10.2025 Получение id и name всех ворот
 	*

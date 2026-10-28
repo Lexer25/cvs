@@ -7,7 +7,7 @@ return array
 		'connection'	=> array(
 		//'dsn'		=> 'odbc:SDUO',
 		//'dsn'		=> 'odbc:ParkResident',
-		'dsn'		=> 'odbc:HL_2025_07_21',
+		'dsn'		=> 'odbc:HL',
 		'charset'   => 'windows-1251',
 		)
 	),

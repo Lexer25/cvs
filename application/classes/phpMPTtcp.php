@@ -99,7 +99,7 @@ class phpMPTtcp
 			};
 			// создаем соединение 
 		$this->connection = @socket_connect($this->socket, $this->address, $this->port);
-		Log::instance()->add(Log::NOTICE, "69 check. Время установки подключения  ".(microtime(true) - $t1));
+		//Log::instance()->add(Log::NOTICE, "69 check. Время установки подключения  ".(microtime(true) - $t1));
 		if ($this->connection === false)      
 		{
 			Log::instance()->add(Log::NOTICE, "55 Cannot connect to device ".$this->address.":". $this->port);
@@ -232,6 +232,7 @@ class phpMPTtcp
 		'text'=>"\x46",
 		'clearTablo'=>"\x44",
 		'scrolText'=>"\x4A",
+		'getPortState'=>"\x53",				 
 		);
 		
 		//echo Debug::vars('115 команда в контроллер', $command, $this->commandParam, $this->coordinate, Arr::get(unpack('c*', (Arr::get($known_commands, $command))), 1));
@@ -362,7 +363,7 @@ class phpMPTtcp
 	{
 		//echo Debug::vars('241', $mode ); exit;
 		$t1=microtime(true);
-		Log::instance()->add(Log::NOTICE, "326 mode number ". $mode); 
+		//Log::instance()->add(Log::NOTICE, "326 mode number ". $mode); 
 		//$mode=1;
 		if($mode ==0)//открываю дверь 0
 		{
@@ -404,7 +405,7 @@ class phpMPTtcp
 			$this->execute();
 
 		}
-		Log::instance()->add(Log::NOTICE, "380 завершил выполнение функции openGate. Время выполнения  ".(microtime(true) - $t1));
+		//Log::instance()->add(Log::NOTICE, "380 завершил выполнение функции openGate. Время выполнения  ".(microtime(true) - $t1));
 			
 		return $this;
 	}

@@ -24,9 +24,65 @@ class Identifier
 		const VALID=0;
 
   
-    public function __construct($id)// id - номер идентификатора
+    public function __construct($id) // id - номер идентификатора
+	{
+		$sql = 'select c.id_pep, c.id_cardtype, hlo.id_garage, c."ACTIVE" as is_active,
+					   c.timestart, c.timeend
+				from card c
+				join people p on p.id_pep = c.id_pep
+				left join hl_orgaccess hlo on hlo.id_org = p.id_org
+				where c.id_card = \''.$id.'\'';
+
+		$query = Arr::flatten(
+			DB::query(Database::SELECT, $sql)
+				->execute(Database::instance('fb'))
+				->as_array()
+		);
+
+		$this->id = $id;
+
+		// 1. Карта не найдена
+		if (!is_numeric(Arr::get($query, 'ID_PEP'))) {
+			$this->status = self::UNKNOWNCARD;
+			return;
+		}
+
+		// 2. Карта найдена — заполняем поля
+		$this->id_garage   = Arr::get($query, 'ID_GARAGE');
+		$this->id_pep      = Arr::get($query, 'ID_PEP');
+		$this->id_cardtype = Arr::get($query, 'ID_CARDTYPE');
+
+		// 3. Карта отключена
+		if ((int) Arr::get($query, 'IS_ACTIVE') !== 1) {
+			$this->status = self::DISABLEDCARD;
+
+			return;
+		}
+
+		// 4. Проверка срока действия (timestart / timeend)
+		$now       = time();
+		$timeStart = Arr::get($query, 'TIMESTART');
+		$timeEnd   = Arr::get($query, 'TIMEEND');
+
+		// timestart: если задан и ещё не наступил — карта недействительна
+		if (!empty($timeStart) && strtotime($timeStart) !== false && $now < strtotime($timeStart)) {
+			$this->status = self::CARDEXPIRED;   // ещё не действует
+			return;
+		}
+
+		// timeend: если задан и уже прошёл — карта просрочена
+		if (!empty($timeEnd) && strtotime($timeEnd) !== false && $now > strtotime($timeEnd)) {
+			$this->status = self::CARDEXPIRED;   // срок истёк
+			return;
+		}
+
+		// 5. Всё в порядке
+		$this->status = self::VALID;
+	}
+
+	public function __construct_($id)// id - номер идентификатора
     {
-       $sql='select c.id_pep, c.id_cardtype, hlo.id_garage from card c
+       $sql='select c.id_pep, c.id_cardtype, hlo.id_garage, c."ACTIVE" as is_active from card c
 				join people p on p.id_pep=c.id_pep
 				left join hl_orgaccess hlo on hlo.id_org=p.id_org
 				where c.id_card=\''.$id.'\'';
@@ -95,32 +151,32 @@ class Identifier
 			
 			public function checkIdentifier()
 			{
-		$identifier=new Identifier($grz);
-		switch($identifier->status){
-			case 'UNKNOWNCARD':
-				//запись в БД что карта неизвестна, завершение работы
-				echo Debug::vars('85 UNKNOWNCARD');
-				$event->eventCode=events::UNKNOWNCARD;
-				$event->grz=$grz;
-				$event->addEventRow();
-				exit;
-			break;
-			case	 'DISABLEDCARD':
-				//запись в БД что карта DISABLEDCARD
-				exit;
-			break;
-			case	 'DISABLEDUSER':
-				//запись в БД что карта DISABLEDUSER
-				exit;
-			break;
-			case	 'CARDEXPIRED':
-				//запись в БД что карта DISABLEDUSER
-				exit;
-			break;
-			default:
-				//идентификатор валидный, продолжаем работу
-			break;
-		}
+			$identifier=new Identifier($grz);
+			switch($identifier->status){
+				case 'UNKNOWNCARD':
+					//запись в БД что карта неизвестна, завершение работы
+					echo Debug::vars('85 UNKNOWNCARD');
+					$event->eventCode=events::UNKNOWNCARD;
+					$event->grz=$grz;
+					$event->addEventRow();
+					exit;
+				break;
+				case	 'DISABLEDCARD':
+					//запись в БД что карта DISABLEDCARD
+					exit;
+				break;
+				case	 'DISABLEDUSER':
+					//запись в БД что карта DISABLEDUSER
+					exit;
+				break;
+				case	 'CARDEXPIRED':
+					//запись в БД что карта DISABLEDUSER
+					exit;
+				break;
+				default:
+					//идентификатор валидный, продолжаем работу
+				break;
+			}
 		
 		}
 		

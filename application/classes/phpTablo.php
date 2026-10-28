@@ -36,7 +36,23 @@ class phpTablo extends phpMPTtcp{
 	
 	public function execute()// выполнение команды $this->command  
 	{
-		
+		//Log::instance()->add(Log::DEBUG, "39 tablo :tablo", array(':tablo'=>Debug::vars($this)));
+		$name='tablo_'.$this->address;
+		if(Cache::instance()->delete($name))//удалил старое значение табло
+		{
+			Log::instance()->add(Log::NOTICE, '43-0 cach :name удаден успешно', array('43'=>$name));
+		} else {
+			Log::instance()->add(Log::NOTICE, '43-1 cach :name НЕ удаден', array('43'=>$name));
+		}
+		Cache::instance()->set($name, Debug::vars($this), 3600);//сохранил новое значение табло
+								
+																							 
+   
+																										
+		  
+																							  
+   
+																												   
 		
 		if($this->isEnabled)
 		{

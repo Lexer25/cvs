@@ -278,7 +278,7 @@ class Controller_cvstest extends Controller{
 		if (Model::factory('mpt')->getSemafor('lastevent'.$cvs->cam) == $cvs_event_id)
 		{
 			$cvs->getMessForIdle();
-			Log::instance()->add(Log::WARNING, '255 Очищаю табло cam, т.к. старый номер события old совпадает с новым номером события new. Вывожу служебные надписи text1 и text2',
+			//Log::instance()->add(Log::WARNING, '255 Очищаю табло cam, т.к. старый номер события old совпадает с новым номером события new. Вывожу служебные надписи text1 и text2',
 				array('old'=>Model::factory('mpt')->getSemafor('lastevent'.$cvs->cam),
 				'new'=>$cvs_event_id,
 				'cam'=>$cvs->cam,
@@ -313,7 +313,7 @@ class Controller_cvstest extends Controller{
 		}
 		else 
 		{
-			Log::instance()->add(Log::WARNING, '279 Табло cam не очищаю, т.к. старый номер события old не совпадает с новым номером события new', array('old'=>Model::factory('mpt')->getSemafor('lastevent'.$cvs->cam), 'new'=>$cvs_event_id, 'cam'=>$cvs->cam), null);
+			//Log::instance()->add(Log::WARNING, '279 Табло cam не очищаю, т.к. старый номер события old не совпадает с новым номером события new', array('old'=>Model::factory('mpt')->getSemafor('lastevent'.$cvs->cam), 'new'=>$cvs_event_id, 'cam'=>$cvs->cam), null);
 		}
 		
 		
