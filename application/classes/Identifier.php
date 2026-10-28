@@ -80,34 +80,6 @@ class Identifier
 		$this->status = self::VALID;
 	}
 
-	public function __construct_($id)// id - номер идентификатора
-    {
-       $sql='select c.id_pep, c.id_cardtype, hlo.id_garage, c."ACTIVE" as is_active from card c
-				join people p on p.id_pep=c.id_pep
-				left join hl_orgaccess hlo on hlo.id_org=p.id_org
-				where c.id_card=\''.$id.'\'';
-
-		//echo Debug::vars('31', $sql);exit;	
-//Log::instance()->add(Log::NOTICE, '35 '.$sql); exit;		
-	   $query = Arr::flatten(DB::query(Database::SELECT, $sql)
-			->execute(Database::instance('fb'))
-			->as_array()
-			);
-		$this->id=$id; 
-		if(is_numeric(Arr::get($query, 'ID_PEP')))	{
-					
-					$this->status=self::VALID; 
-					$this->id_garage=Arr::get($query, 'ID_GARAGE');
-					$this->id_pep=Arr::get($query, 'ID_PEP');
-					$this->id_cardtype=Arr::get($query, 'ID_CARDTYPE');
-		} else {
-			$this->status=self::UNKNOWNCARD;
-
-		}			
-			return;
-			
-    }
-
 
 			public function checkInParking($id_parking)//проверка: находится ли этот идентификатор на id_parkung?
 			{
