@@ -97,7 +97,6 @@ class Garage
 		public static function getListIdentifierOnGarage($gate, $garage)
 		//public function getListIdentifierOnGarage()
 		{
-			 					
 			$sql_details='select hli.id_card from hl_inside hli
                     join people p on p.id_pep=hli.id_pep
                     join hl_orgaccess hlo on hlo.id_org=p.id_org

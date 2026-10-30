@@ -113,7 +113,11 @@ Kohana::init(array(
 /**
  * Attach the file write to logging. Multiple writers are supported.
  */
-Kohana::$log->attach(new Log_File(APPPATH.'logs'));
+//Kohana::$log->attach(new Log_File(APPPATH.'logs'));
+// Будут писаться только уровни с 0 (EMERGENCY) по 6 (INFO)
+// 0 - ничего не писать в лог
+// 6 - все уровни до 6 включительно
+Kohana::$log->attach(new Log_File(APPPATH.'logs'), 6);
 
 /**
  * Attach a file reader to config. Multiple readers are supported.
