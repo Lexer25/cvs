@@ -61,27 +61,20 @@ class Controller_Dashboard extends Controller{
 	
 	
 	
-	public function action_index()
-	{	
-		$mess='Модуль интеграции системы распознавания государственных регистрационных знаков CVS и СКУД Артонит Сити.<br>';
-		$mess.='www.artsec.ru<br>';
-		$mess.='2022-'.date("Y").'<br>';
-		$mess.='Ver:'.Kohana::$config->load('config')->ver.'<br>';
-		$mess.=HTML::anchor('guide', 'guide');
-		$this->response->body($mess);
-		
-			
-		
-		
-		$content = View::factory('dashboard', array(
-			//'garageLst'=>$garageLst,
-				
-		));
-        //$this->template->content = $content;
-		
-	
-		}
-		
+public function action_index()
+{
+    $mess  = 'Модуль интеграции системы распознавания государственных регистрационных знаков CVS и СКУД Артонит Сити.<br>';
+    $mess .= 'www.artsec.ru<br>';
+    $mess .= '2022-' . date("Y") . '<br>';
+    $mess .= 'Ver:' . (defined('CVS_VERSION') ? CVS_VERSION : 'unknown') . '<br>';
+    $mess .= HTML::anchor('guide', 'guide');
+    $this->response->body($mess);
+
+    $content = View::factory('dashboard', array(
+        //'garageLst'=>$garageLst,
+    ));
+    //$this->template->content = $content;
+}
 	
 
 	
