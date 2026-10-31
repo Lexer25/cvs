@@ -213,7 +213,18 @@ public function action_index()
 		//Log::instance()->add(Log::NOTICE, '676 debug :data', array(':data'=>Debug::vars($input_data)));
 		
 		//Валидация данных: все ли правильно?
-		$post=Validation::factory($input_data);
+		//$post=Validation::factory($input_data);
+		
+		if (is_array($input_data)) {
+				$post = Validation::factory($input_data);
+		} else {
+			
+			Log::instance()->add(Log::NOTICE, '222 Входные данные cvs не являются массивом '. Debug::vars($input_data)); //exit;//вывод номера в лог-файл
+			exit;
+			
+		}
+		
+
 		
 		$post->rule('id', 'not_empty')//номер события
 					->rule('id', 'digit')
