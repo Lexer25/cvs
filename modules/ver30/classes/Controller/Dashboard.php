@@ -59,23 +59,81 @@ class Controller_Dashboard extends Controller{
 		
 	}
 	
-	
-	
 public function action_index()
 {
     $mess  = 'Модуль интеграции системы распознавания государственных регистрационных знаков CVS и СКУД Артонит Сити.<br>';
     $mess .= 'www.artsec.ru<br>';
     $mess .= '2022-' . date("Y") . '<br>';
     $mess .= 'Ver:' . (defined('CVS_VERSION') ? CVS_VERSION : 'unknown') . '<br>';
-    $mess .= HTML::anchor('guide', 'guide');
-    $this->response->body($mess);
+    $mess .= HTML::anchor('guide', 'guide') . '<br><br>';
+    $mess .= '<b>Тестирование</b><br>
+        запусть файл C:\xampp\htdocs\cvs\modules\ver30\classes\Task\test_garage_057_3491248_in.bat<br>
+        На рабочем месте охраны https://localhost/parkresident/index.php/rmo наблюдать появление события.<br><br>
+        <b>Внимание!</b><br>Если в колонке comment указано debug_ON, то изменить настройку debug в файле C:\xampp\htdocs\cvs\modules\ver30\config\config.php.<br><br>';
 
-    $content = View::factory('dashboard', array(
-        //'garageLst'=>$garageLst,
-    ));
-    //$this->template->content = $content;
-}
-	
+    // --- Блок "Текущие настройки" ---
+    // Вариант 1: если config.php зарегистрирован как Kohana-конфиг (например, 'config')
+    $cfg = Kohana::$config->load('config');
+    $testMode = (bool) $cfg->get('testMode', false);
+    $debug    = (bool) $cfg->get('debug', false);
+    $reverseGate = $cfg->get('reverseGate', array());
+
+    // Вариант 2 (если конфиг не зарегистрирован в Kohana, а лежит файлом):
+    // $cfg = include MODPATH.'ver30/config/config.php';
+    // $testMode = (bool) Arr::get($cfg, 'testMode', false);
+    // $debug    = (bool) Arr::get($cfg, 'debug', false);
+    // $reverseGate = Arr::get($cfg, 'reverseGate', array());
+
+    // reverseGate может быть массивом или строкой — приводим к строке для вывода
+    if (is_array($reverseGate)) {
+        $reverseGateStr = empty($reverseGate) ? '—' : implode(', ', $reverseGate);
+    } else {
+        $reverseGateStr = (string) $reverseGate;
+    }
+
+    $mess .= '<b>Текущие настройки</b><br>';
+    $mess .= '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;margin-bottom:15px;">';
+    $mess .= '<tr><th align="left">Параметр</th><th align="left">Значение</th><th align="left">Описание</th></tr>';
+    $mess .= '<tr><td>testMode</td><td>' . ($testMode ? 'true' : 'false') . '</td><td>true - проезд разрешен по любому идентификатору<br>false - рабочий режим.</td></tr>';
+    $mess .= '<tr><td>debug</td><td>' . ($debug ? 'true' : 'false') . '</td><td>true - команды на контроллеры и табло не подаются<br>false - рабочий режим.</td></tr>';
+    $mess .= '<tr><td>reverseGate</td><td>' . HTML::chars($reverseGateStr) . '</td><td>id ворот, работающих в ревресинов режиме (и на въезд, и на выезд).<br>Если gate находится в этом списке, то щелкнут оба реле</td></tr>';
+    $mess .= '</table><br>';
+
+    // Кнопка «Тест» — отправляет POST с $dataGRZ на dashboard/exec
+    $mess .= '<button id="btnTestCvs" type="button">Тест</button>';
+    $mess .= '<pre id="testResult" style="margin-top:10px;white-space:pre-wrap;"></pre>';
+
+    // JSON с тестовыми данными из $this->dataGRZ
+    $testPayload = json_encode(array('plate' => $this->dataGRZ));
+
+    $mess .= '<script>
+    (function () {
+        var url = ' . json_encode(URL::site('dashboard/exec', true)) . ';
+        var payload = ' . $testPayload . ';
+
+        document.getElementById("btnTestCvs").addEventListener("click", function () {
+            var out = document.getElementById("testResult");
+            out.textContent = "Отправка POST на " + url + " ...";
+
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(function (r) {
+                return r.text().then(function (t) {
+                    out.textContent = "HTTP " + r.status + " " + r.statusText + "\n\n" + t;
+                });
+            })
+            .catch(function (e) {
+                out.textContent = "Ошибка: " + e;
+            });
+        });
+    })();
+    </script>';
+
+    $this->response->body($mess);
+}	
 
 	
 	public function action_sendMPT()
