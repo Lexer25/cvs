@@ -138,7 +138,8 @@ Kohana::modules(array(
 	 'unittest'   => MODPATH.'unittest',   // Unit testing
 	 'userguide'  => MODPATH.'userguide',  // User guide and API documentation
 	 'ver30'  => MODPATH.'ver30',  // версия 3.0
-	 'mptemu' => MODPATH.'mptemu', // эмулятор внешнего контроллера ворот и табло
+	 'mptemu'   => MODPATH.'mptemu',   // эмулятор внешнего контроллера ворот и табло
+	 'eventsse' => MODPATH.'eventsse', // тот же эмулятор, но наблюдение через Server-Sent Events
 	));
 
 /**

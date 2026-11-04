@@ -423,6 +423,8 @@ class Model_Cvss extends Model {
 				} else {
 					$mpt->result ='OK';
 				}			
+				// команда ушла в контроллер - дублирую её в MQTT
+				$this->mqttGate($cvs, $identifier, $cvs->mode, (bool) Arr::get($config, 'debug'));
 				//============= даю в цикле команды на открытие ворот. Цикл сделан на случай потери связи, и был актуален для UDP
 					$i=0;
 					while($mpt->result !='OK' AND $i<2)// делать до 2 попыток
@@ -496,6 +498,7 @@ class Model_Cvss extends Model {
 				$tablo->command='scrolText';// вывод сообщений на табло
 				$tablo->commandParam=$cvs->eventdMess;
 				$tablo->coordinate="\x08\x00\x02\x01";
+				$this->mqttTablo($cvs, $identifier, $tablo, 2);
 				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '164 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
 				
@@ -521,6 +524,7 @@ class Model_Cvss extends Model {
 				$tablo->command='scrolText';// вывод сообщений на табло
 				$tablo->commandParam=$cvs->eventdMess;
 				$tablo->coordinate="\x08\x00\x03\x01";
+				$this->mqttTablo($cvs, $identifier, $tablo, 3);
 				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '187 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
@@ -545,6 +549,7 @@ class Model_Cvss extends Model {
 				$tablo->command='scrolText';// вывод сообщений на табло
 				$tablo->commandParam=$cvs->eventdMess;
 				$tablo->coordinate="\x08\x00\x04\x01";
+				$this->mqttTablo($cvs, $identifier, $tablo, 4);
 				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '216 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
@@ -572,6 +577,7 @@ class Model_Cvss extends Model {
 				$tablo->command='scrolText';// вывод сообщений на табло
 				$tablo->commandParam=$cvs->eventdMess;
 				$tablo->coordinate="\x08\x00\x06\x01";
+				$this->mqttTablo($cvs, $identifier, $tablo, 6);
 				if(!Arr::get($config, 'debug')) $tablo->execute();
 				//Log::instance()->add(Log::NOTICE, '246 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 
@@ -588,6 +594,66 @@ class Model_Cvss extends Model {
 		
 	}
 	
+	/**
+	 * Дублирование команды открытия ворот в MQTT.
+	 *
+	 * @param  phpCVS     $cvs
+	 * @param  Identifier $identifier
+	 * @param  int        $mode
+	 * @param  bool       $debug
+	 * @return void
+	 */
+	protected function mqttGate(phpCVS $cvs, Identifier $identifier, $mode, $debug)
+	{
+		switch ((int) $mode)
+		{
+			case 0:
+				$doors = array(0);
+			break;
+			case 1:
+				$doors = array(1);
+			break;
+			default:
+				$doors = array(0, 1);
+			break;
+		}
+
+		Mqtt_Publisher::instance()->gate($cvs, 'opendoor', array(
+			'mode'      => (int) $mode,
+			'doors'     => $doors,
+			'plate'     => $identifier->id,
+			'direction' => $cvs->isEnter ? 'enter' : 'exit',
+			'debug'     => (bool) $debug,
+		));
+	}
+
+	/**
+	 * Дублирование команд табло в MQTT: clearTablo, text, scrolText.
+	 *
+	 * @param  phpCVS     $cvs
+	 * @param  Identifier $identifier
+	 * @param  phpTablo   $tablo
+	 * @param  int        $screen номер экрана в координате (2, 3, 4, 6)
+	 * @return void
+	 */
+	protected function mqttTablo(phpCVS $cvs, Identifier $identifier, phpTablo $tablo, $screen)
+	{
+		if ( ! $tablo->isEnabled)
+			return;
+
+		$debug = (bool) Arr::get(Kohana::$config->load('config'), 'debug');
+		$page  = chr((int) $screen);
+		$mqtt  = Mqtt_Publisher::instance();
+
+		$data = array('screen' => (int) $screen, 'debug' => $debug);
+
+		$mqtt->tablo($cvs, 'clearTablo', NULL, NULL, $data);
+
+		$mqtt->tablo($cvs, 'text', "\x00\x00".$page, $identifier->id, $data);
+
+		$mqtt->tablo($cvs, 'scrolText', "\x08\x00".$page."\x01", $cvs->eventdMess, $data);
+	}
+
 	/**основной блок логики
 		*/
 		
@@ -766,6 +832,7 @@ class Model_Cvss extends Model {
 					case 16:
 					case 17:
 					case 18:
+					case 24:
 					case 24:
 					case 81:
 							//записываю в комментарии к событию список идентификаторов, находящихся в этом гараже на этой парковочной площадке

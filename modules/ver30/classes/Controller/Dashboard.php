@@ -347,6 +347,13 @@ public function action_index()
 		$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
 		$result=$mpt->openGate($cvs->ch);// даю команду открыть ворота. Результат может быть разный: от  подключения к контроллера до ошибки в протоколе.
 		
+		Mqtt_Publisher::instance()->gate($cvs, 'opendoor', array(
+			'mode'   => (int) $cvs->ch,
+			'doors'  => array((int) $cvs->ch),
+			'source' => 'operator',
+			'debug'  => FALSE,
+		));
+
 		Log::instance()->add(Log::NOTICE, '499 открыл ворота id=:id ip=:ip port=:port ch=:ch', array(':id'=>$id_gate, ':ip'=>$cvs->box_ip, ':port'=>$cvs->box_port, ':ch'=>$cvs->ch));
 		Log::instance()->add(Log::NOTICE, '414 результат выполнения команды открытия ворот :res', array(':res'=>Debug::vars($result)));
 		//надо вернуть ответ
@@ -394,6 +401,13 @@ public function action_index()
 		$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
 		$result=$mpt->openGate($cvs->ch);// даю команду открыть ворота. Результат может быть разный: от  подключения к контроллера до ошибки в протоколе.
 		
+		Mqtt_Publisher::instance()->gate($cvs, 'opendoor', array(
+			'mode'   => (int) $cvs->ch,
+			'doors'  => array((int) $cvs->ch),
+			'source' => 'bot',
+			'debug'  => FALSE,
+		));
+
 		Log::instance()->add(Log::NOTICE, '333 команда от бота открыть ворота id=:id ip=:ip port=:port ch=:ch', array(':id'=>$id_gate, ':ip'=>$cvs->box_ip, ':port'=>$cvs->box_port, ':ch'=>$cvs->ch));
 		//Log::instance()->add(Log::NOTICE, '334 результат выполнения команды открытия ворот :res', array(':res'=>Debug::vars($result)));
 		Log::instance()->add(Log::NOTICE, '335 результат выполнения команды открытия ворот :res', array(':res'=>$result->result));
