@@ -132,7 +132,7 @@ class Model_Cvss extends Model {
 	
 	public function mainAnalysis(Identifier $identifier, phpCVS $cvs)
 	{
-		// Log::instance()->add(Log::NOTICE, '729 identifier :data', array(':data'=>Debug::vars($identifier)));
+		 Log::instance()->add(Log::NOTICE, '729 identifier :data', array(':data'=>Debug::vars($identifier)));
 		// Log::instance()->add(Log::NOTICE, '730 cvs :data', array(':data'=>Debug::vars($cvs)));
 		//формирую информацию о паркинге (нужные режимы его работы
 		//sleep(5); //имитация задержки в период проверки при работе с рабочей базой данных
@@ -172,15 +172,17 @@ class Model_Cvss extends Model {
 			}
 			//$result = Events::DISABLEDCARD;
 			
-			return $result;
+			
 			//exit;
 		} 
-		Log::instance()->add(Log::NOTICE, '132 :key identifier :key валидна status=:status, ворота :id_gate. Продолжаю обработку.',
+		Log::instance()->add(Log::NOTICE, '132 :key identifier :key валидна status=:status, ворота :id_gate. result :result. Продолжаю обработку.',
 				array(
 					':key'=>$identifier->id,
 					':status'=>$identifier->status,
 					':id_gate'=>$cvs->id_gate,
+					':result'=>$result,
 					));
+		return $result;
 		//Теперь надо собрать данные для дальнейшего анализа
 		
 		//надо иметь информацию и о воротах, откуда пришел ГРЗ
@@ -316,7 +318,7 @@ class Model_Cvss extends Model {
 		//если включен режим Тест (в конфигураторе, файл config), то надо возращать результат 145 (прохода в режиме Тест).
 		//результатом работы этого этапа является:
 		//коррекция сообщения для вывода на табло cvs->eventdMess 
-	  // Log::instance()->add(Log::NOTICE, '223 start gateControl :data', array(':data'=>Debug::vars($cvs))); 
+	   Log::instance()->add(Log::NOTICE, '223 start gateControl :data', array(':data'=>Debug::vars($cvs))); 
 	  // Log::instance()->add(Log::NOTICE, '223- tablo :mess ', array(':mess'=>iconv('windows-1251','UTF-8', $cvs->eventdMess))); 
 		$t1=microtime(1);	
 	   $config = Kohana::$config->load('config');
@@ -401,6 +403,7 @@ class Model_Cvss extends Model {
 		
 		$tablo=new phpTablo($cvs->tablo_ip, $cvs->tablo_port);//работа в режиме TCP 
 		
+		
 			
 		 switch($cvs->code_validation){
 		
@@ -434,7 +437,7 @@ class Model_Cvss extends Model {
 						$i++;
 					}
 					//Log::instance()->add(Log::NOTICE, '004_150 Событие 50. Результат выполнения команды openGate '.$cvs->box_ip.':'.$cvs->box_port.' result='.$mpt->result.', desc='.$mpt->edesc.'  после '. $i .' попыток time_from_start='.number_format((microtime(1) - $t1), 3));		
-				if($mpt->result == 'Err') 
+				if($mpt->result == 'err')//регистр важен:  phpMPTtcp выставляет именно 'err'
 				{
 					Log::instance()->add(Log::NOTICE, '138 Событие 50. Не смог открыть ворота в течении 10 попыток. Видеокамера '.$cvs->cam.' ('.$direct.') ГРЗ '.$identifier->id.' контролер IP='.$cvs->box_ip.':'.$cvs->box_port.' Режим шлюза '.$cvs->mode.' Ответ '.$mpt->result.' edesc '.$mpt->edesc);		
 				} else 
@@ -505,12 +508,15 @@ class Model_Cvss extends Model {
 				
 			 break;
 			 case 46 : //неизвестная карта
+			 case Events::DISABLEDCARD : //карта неактивна код события 40
+			 case Events::CARDEXPIRED : //срок действия карты истек код события 41
+			 
 					//для неизвестной карты открывать ворота НЕ надо, поэтому экземпляр МПТ не создается.
 					//работаю только с табло
 				$tablo->command='clearTablo';
 				if(!Arr::get($config, 'debug')) $tablo->execute(); 	
 				
-				//Log::instance()->add(Log::NOTICE, '173-0 Ответ от табло '.Debug::vars($tablo));		
+				
 				//Log::instance()->add(Log::NOTICE, '173 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
 							
 				
@@ -663,7 +669,7 @@ class Model_Cvss extends Model {
 			$cvs=new phpCVS($id_gate);
 			$identifier=new Identifier($identifier);
 			
-			//Log::instance()->add(Log::NOTICE, '551-0 :key common identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
+			Log::instance()->add(Log::NOTICE, '551-0 :key common identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
 			//Log::instance()->add(Log::NOTICE, '552-1 :key common cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
 				
 			//готовлю класс для записи события.
@@ -805,13 +811,13 @@ class Model_Cvss extends Model {
 			 //  }
 			   
 
-			//echo Debug::vars('741', $result);exit;
+			
 			$cvs->code_validation=$result;//передаю в модель результат валидации
 			$cvs->getMessForEvent($result);//формирую текстовое сообщение для табло
-			
+			Log::instance()->add(Log::DEBUG, '817 '.Debug::vars($cvs));
 			//сохраняю идентификатора в кеше для защиты от повторной обработки
 					
-			//Log::instance()->add(Log::NOTICE, '777-006 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025  		
+			
 			//делаю набор условий для последующей обработки. Если результат 50 (можно проезжать), то жду 30 секунд.
 	
 				switch($result){
@@ -827,7 +833,7 @@ class Model_Cvss extends Model {
 						$this->setMutexIdentifier('gate_'.$cvs->id_gate, $_data ); //если проезд разрешен, то фиксирую этот ГРЗ в мьютексе.
 						//Log::instance()->add(Log::NOTICE, '206 :key валидация прошла успешно, записал в mutex :name значение :data', array(':key'=>$identifier->id,':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 													
-					//break;
+					break;
 					case 15://проезд запрещен...
 					case 16:
 					case 17:
@@ -846,21 +852,7 @@ class Model_Cvss extends Model {
 					break;
 				}
 				
-//Log::instance()->add(Log::NOTICE, '777-007 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 				
-//============================== ???		 			
-			/* Log::instance()->add(Log::NOTICE, '318 :key mutex перед gateControl имеет значение  :mutex.', 
-				array(
-					':key'=>$identifier->id, 
-					':mutex'=>Debug::vars($this->getMutexIdentifier('gate_'.$cvs->id_gate))));	
-			  */
-	
-					
-			//мьтекс введен с целью недопустить фиксацию двух машиномест при получении сразу двух идентификаторов от одного автомобиля на въезде		
-			//в этот момент в мьютексе должен находится последний (по времени) валидный идентификатор
-			// если его значение совпадает с текущим обрабатываемым, значит, надо продолжать работу.
-			// если не совпадает - значит, пока шла обработка этого идентификатора, по другому каналу пришел и был обработан другой идентификатор.			
-			
-			//Log::instance()->add(Log::NOTICE, '351 :key grz mutex свободен.', array(':key'=>$identifier->id));
+
 //=========== запись события в журнал
 
 				

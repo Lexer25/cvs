@@ -188,7 +188,7 @@ class Garage
 			$query = DB::query(Database::SELECT, $sql)
 					->execute(Database::instance('fb'))
 					->as_array();
-				//echo Debug::vars('87', $sql, $query); exit;
+				echo Debug::vars('87', $sql, $query); exit;
 				$query=Arr::get($query, 0);
 			   $this->eventdMess = Arr::get($query, 'TEXT');
 			   $this->messParam = Arr::get($query, 'PARAM');

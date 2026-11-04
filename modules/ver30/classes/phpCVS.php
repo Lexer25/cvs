@@ -79,7 +79,7 @@ class phpCVS
 	$query = DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->as_array();
-		//echo Debug::vars('87', $sql, $query); exit;
+		Log::instance()->add(Log::DEBUG, '82 '.Debug::vars($sql));
 		$query=Arr::get($query, 0);
 	   $this->eventdMess = Arr::get($query, 'TEXT');
 	   $this->messParam = Arr::get($query, 'PARAM');
