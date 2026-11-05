@@ -2,10 +2,10 @@
 *.bak
 
 # Игнорировать содержимое папок cache, но сохранять .gitkeep
-**/cache/*
+application/cache/*
 !application/cache/.gitkeep
 
 # Игнорировать содержимое папок log, но сохранять .gitkeep
-**/logs/*
+application/logs/*
 !application/logs/.gitkeep
 
