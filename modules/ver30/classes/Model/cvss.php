@@ -172,7 +172,7 @@ class Model_Cvss extends Model {
 			}
 			//$result = Events::DISABLEDCARD;
 			
-			
+			return $result;
 			//exit;
 		} 
 		Log::instance()->add(Log::NOTICE, '132 :key identifier :key валидна status=:status, ворота :id_gate. result :result. Продолжаю обработку.',
@@ -180,9 +180,9 @@ class Model_Cvss extends Model {
 					':key'=>$identifier->id,
 					':status'=>$identifier->status,
 					':id_gate'=>$cvs->id_gate,
-					':result'=>$result,
+					//':result'=>$result,
 					));
-		return $result;
+		
 		//Теперь надо собрать данные для дальнейшего анализа
 		
 		//надо иметь информацию и о воротах, откуда пришел ГРЗ
