@@ -1,0 +1,1 @@
+История изменения см. файл C:\xampp\htdocs\cvs\modules\ver30\cvs_history.txt

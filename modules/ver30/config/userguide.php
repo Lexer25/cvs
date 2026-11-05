@@ -2,12 +2,12 @@
 
 return array(
 		// Enable the API browser.  TRUE or FALSE
-		'api_browser'  => true,
+		'api_browser'  => false,
 
 	// Enable these packages in the API browser.  TRUE for all packages, or a string of comma seperated packages, using 'None' for a class with no @package
 	// Example: 'api_packages' => 'Kohana,Kohana/Database,Kohana/ORM,None',
-		//'api_packages' => true,
-		'api_packages' => 'dashboard, Tools, cvtTest',
+		//'api_packages' => false,
+		//'api_packages' => 'dashboard, Tools, cvtTest',
 		//'api_packages' => 'None',
 
 	// Enables Disqus comments on the API and User Guide pages
