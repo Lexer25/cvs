@@ -32,6 +32,11 @@ class Mqtt_Publisher
 	protected $blocked_until = 0;
 
 	/**
+	 * @var string  текст последней ошибки подключения или публикации
+	 */
+	protected $error = '';
+
+	/**
 	 * @return Mqtt_Publisher
 	 */
 	public static function instance()
@@ -115,9 +120,155 @@ class Mqtt_Publisher
 	 */
 	public function topic($gate, $device)
 	{
+		return $this->prefixed('gate/'.(int) $gate.'/'.$device);
+	}
+
+	/**
+	 * Топик с префиксом из настроек.
+	 *
+	 * @param  string $suffix
+	 * @return string
+	 */
+	public function prefixed($suffix)
+	{
 		$prefix = trim((string) $this->config->get('prefix', 'cvs'), '/');
 
-		return ($prefix === '' ? '' : $prefix.'/').'gate/'.(int) $gate.'/'.$device;
+		return ($prefix === '' ? '' : $prefix.'/').$suffix;
+	}
+
+	/**
+	 * Проверка настроек MQTT: доступность брокера, подключение и пробная публикация.
+	 *
+	 * Этапы проверяются по очереди, при ошибке на любом из них возвращается
+	 * описание проблемы - это позволяет отличить "брокер не запущен" от
+	 * "брокер не принял логин/пароль" и от "публикация отключена в настройках".
+	 *
+	 * @param  string $topic  топик для тестового сообщения
+	 * @param  array  $payload
+	 * @return array  ok, enabled, host, port, topic, payload, probe, connected, published, error, message
+	 */
+	public function test($topic = NULL, array $payload = array())
+	{
+		$host = (string) $this->config->get('host', '127.0.0.1');
+		$port = (int) $this->config->get('port', 1883);
+
+		if ($topic === NULL)
+		{
+			$topic = $this->prefixed('dashboard/test');
+		}
+
+		$payload = array_merge(array(
+			'gate'   => 0,
+			'cmd'    => 'test',
+			'source' => 'dashboard',
+		), $payload);
+		$payload['ts'] = date('Y-m-d H:i:s');
+
+		$result = array(
+			'ok'        => FALSE,
+			'enabled'   => (bool) $this->config->get('enabled', TRUE),
+			'host'      => $host,
+			'port'      => $port,
+			'qos'       => (int) $this->config->get('qos', 0),
+			'retain'    => (bool) $this->config->get('retain', FALSE),
+			'topic'     => $topic,
+			'payload'   => $payload,
+			'probe'     => FALSE,
+			'connected' => FALSE,
+			'published' => FALSE,
+			'error'     => '',
+			'message'   => '',
+		);
+
+		// 1. TCP-доступность брокера
+		$probe = $this->probe();
+
+		if ($probe !== TRUE)
+		{
+			$reason = is_string($probe) ? $probe : $host.':'.$port.' недоступен';
+
+			$result['error']   = 'брокер '.$reason;
+			$result['message'] = 'Брокер '.$reason;
+
+			Log::instance()->add(Log::NOTICE, 'mqtt test: '.$result['message']);
+
+			return $result;
+		}
+
+		$result['probe'] = TRUE;
+
+		// 2. подключение (CONNECT с логином и паролем)
+		try
+		{
+			$connected = $this->connect();
+		}
+		catch (Exception $e)
+		{
+			$connected = FALSE;
+			$this->error = 'ошибка протокола MQTT: '.$e->getMessage();
+		}
+
+		if ( ! $connected)
+		{
+			$result['error']   = ($this->error !== '') ? $this->error : 'не удалось подключиться к брокеру';
+			$result['message'] = 'Подключение не установлено: '.$result['error'];
+
+			Log::instance()->add(Log::NOTICE, 'mqtt test: '.$result['message']);
+
+			return $result;
+		}
+
+		$result['connected'] = TRUE;
+
+		// 3. публикация тестового сообщения (только если публикация включена)
+		if ( ! $result['enabled'])
+		{
+			$result['ok']      = TRUE;
+			$result['message'] = 'Брокер доступен, подключение установлено. Публикация отключена (enabled = false), тестовое сообщение не отправлено.';
+		}
+		else
+		{
+			$json = json_encode($payload, JSON_UNESCAPED_UNICODE);
+
+			if ($json === FALSE)
+			{
+				$result['error']   = 'не удалось сериализовать тестовое сообщение';
+				$result['message'] = $result['error'];
+			}
+			else
+			{
+				try
+				{
+					$this->client->publish(
+						$topic,
+						$json,
+						$result['qos'],
+						$result['retain']
+					);
+
+					$result['published'] = TRUE;
+					$result['ok']        = TRUE;
+					$result['message']   = 'Тестовое сообщение отправлено в топик '.$topic
+						.' (QoS '.$result['qos'].', retain '.($result['retain'] ? 'true' : 'false').').';
+				}
+				catch (Exception $e)
+				{
+					$this->disconnect();
+
+					$result['error']   = 'ошибка публикации: '.$e->getMessage();
+					$result['message'] = 'Публикация не выполнена: '.$result['error'];
+				}
+			}
+		}
+
+		if ($result['message'] === '')
+		{
+			$result['message'] = $result['error'];
+		}
+
+		Log::instance()->add(Log::NOTICE, 'mqtt test: '.$result['message']);
+
+		return $result;
 	}
 
 	/**
@@ -130,7 +281,11 @@ class Mqtt_Publisher
 	public function publish($topic, array $payload)
 	{
 		if ( ! $this->config->get('enabled', TRUE))
+		{
+			$this->error = 'публикация в MQTT отключена (enabled = false)';
+
 			return FALSE;
+		}
 
 		if (microtime(TRUE) < $this->blocked_until)
 			return FALSE;
@@ -144,7 +299,8 @@ class Mqtt_Publisher
 
 		if ($json === FALSE)
 		{
-			Log::instance()->add(Log::NOTICE, 'mqtt: не удалось сериализовать сообщение для '.$topic);
+			$this->error = 'не удалось сериализовать сообщение для '.$topic;
+			Log::instance()->add(Log::NOTICE, 'mqtt: '.$this->error);
 
 			return FALSE;
 		}
@@ -160,11 +316,12 @@ class Mqtt_Publisher
 		}
 		catch (Exception $e)
 		{
-			$this->connected   = FALSE;
-			$this->client      = NULL;
+			$this->error         = 'ошибка публикации '.$topic.': '.$e->getMessage();
+			$this->connected     = FALSE;
+			$this->client        = NULL;
 			$this->blocked_until = microtime(TRUE) + (float) $this->config->get('down_ttl', 5);
 
-			Log::instance()->add(Log::NOTICE, 'mqtt: ошибка публикации '.$topic.': '.$e->getMessage());
+			Log::instance()->add(Log::NOTICE, 'mqtt: '.$this->error);
 
 			return FALSE;
 		}
@@ -186,30 +343,76 @@ class Mqtt_Publisher
 		$port    = (int) $this->config->get('port', 1883);
 		$timeout = (float) $this->config->get('connect_timeout', 1);
 
-		$probe = @fsockopen($host, $port, $errno, $errstr, $timeout);
+		$probe = $this->probe($host, $port, $timeout);
 
-		if ($probe === FALSE)
+		if ($probe !== TRUE)
 		{
+			$this->error         = 'брокер '.$probe;
 			$this->blocked_until = microtime(TRUE) + (float) $this->config->get('down_ttl', 5);
-			Log::instance()->add(Log::NOTICE, 'mqtt: брокер '.$host.':'.$port.' недоступен'.($errstr ? ' ('.$errstr.')' : ''));
+			Log::instance()->add(Log::NOTICE, 'mqtt: '.$this->error);
 
 			return FALSE;
 		}
-
-		fclose($probe);
 
 		$this->client = new phpMQTT($host, $port, $this->client_id());
 
 		if ( ! @$this->client->connect(TRUE, NULL, $this->config->get('username'), $this->config->get('password')))
 		{
+			$this->error         = 'не удалось подключиться к '.$host.':'.$port;
 			$this->client        = NULL;
 			$this->blocked_until = microtime(TRUE) + (float) $this->config->get('down_ttl', 5);
-			Log::instance()->add(Log::NOTICE, 'mqtt: не удалось подключиться к '.$host.':'.$port);
+			Log::instance()->add(Log::NOTICE, 'mqtt: '.$this->error);
 
 			return FALSE;
 		}
 
-		$this->connected = TRUE;
+		$this->connected     = TRUE;
+		$this->blocked_until = 0;
+		$this->error         = '';
+
+		return TRUE;
+	}
+
+	/**
+	 * Предварительная проверка TCP-доступности брокера.
+	 *
+	 * @param  string $host
+	 * @param  int    $port
+	 * @param  float  $timeout
+	 * @return TRUE|string  TRUE при успехе, иначе текст ошибки
+	 */
+	protected function probe($host = NULL, $port = NULL, $timeout = NULL)
+	{
+		if ($host === NULL)
+		{
+			$host = (string) $this->config->get('host', '127.0.0.1');
+		}
+
+		if ($port === NULL)
+		{
+			$port = (int) $this->config->get('port', 1883);
+		}
+
+		if ($timeout === NULL)
+		{
+			$timeout = (float) $this->config->get('connect_timeout', 1);
+		}
+
+		$socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
+
+		if ($socket === FALSE)
+		{
+			$reason = $host.':'.$port.' недоступен';
+
+			if ($errstr)
+			{
+				$reason .= ' ('.$this->clean_error($errstr).')';
+			}
+
+			return $reason;
+		}
+
+		fclose($socket);
 
 		return TRUE;
 	}
@@ -265,5 +468,28 @@ class Mqtt_Publisher
 		$converted = @iconv('windows-1251', 'UTF-8//IGNORE', $string);
 
 		return ($converted === FALSE) ? $string : $converted;
+	}
+
+	/**
+	 * Текст ошибки для показа на странице: UTF-8, без переводов строк, не длиннее $length.
+	 *
+	 * Сообщения системных вызовов Windows (например, от fsockopen) приходят
+	 * в кодировке ANSI, поэтому перед выводом их нужно привести к UTF-8 -
+	 * иначе json_encode не сможет сериализовать ответ.
+	 *
+	 * @param  string  $text
+	 * @param  int     $length
+	 * @return string
+	 */
+	protected function clean_error($text, $length = 200)
+	{
+		$text = trim(preg_replace('/\s+/u', ' ', $this->to_utf8((string) $text)));
+
+		if (function_exists('mb_strlen') AND mb_strlen($text, 'UTF-8') > $length)
+		{
+			$text = mb_substr($text, 0, $length, 'UTF-8').'…';
+		}
+
+		return $text;
 	}
 }

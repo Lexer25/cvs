@@ -94,17 +94,23 @@ public function action_index()
     $mess .= '<b>Текущие настройки</b><br>';
     $mess .= '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;margin-bottom:15px;">';
     $mess .= '<tr><th align="left">Параметр</th><th align="left">Значение</th><th align="left">Описание</th></tr>';
+    $mess .= '<tr><td colspan="3" align="left" style="background:#f2f2f2;"><b>Общие настройки</b> ('.HTML::chars($this->_config_path('config')).')</td></tr>';
     $mess .= '<tr><td>testMode</td><td>' . ($testMode ? 'true' : 'false') . '</td><td>true - проезд разрешен по любому идентификатору<br>false - рабочий режим.</td></tr>';
     $mess .= '<tr><td>debug</td><td>' . ($debug ? 'true' : 'false') . '</td><td>true - команды на контроллеры и табло не подаются<br>false - рабочий режим.</td></tr>';
     $mess .= '<tr><td>reverseGate</td><td>' . HTML::chars($reverseGateStr) . '</td><td>id ворот, работающих в ревресинов режиме (и на въезд, и на выезд).<br>Если gate находится в этом списке, то щелкнут оба реле</td></tr>';
+    $mess .= '<tr><td colspan="3" align="left" style="background:#f2f2f2;"><b>MQTT</b> ('.HTML::chars($this->_config_path('mqtt')).')</td></tr>';
+    $mess .= $this->_mqtt_settings();
     $mess .= '</table><br>';
 
     // --- Блок "Подключение к базе данных" ---
     $mess .= $this->_db_connection();
 
     // Кнопка «Тест» — отправляет POST с $dataGRZ на dashboard/exec
-    $mess .= '<button id="btnTestCvs" type="button">Тест</button>';
+    $mess .= '<button id="btnTestCvs" type="button">Тест CVS</button>';
+    // Кнопка «Тест MQTT» — проверяет брокера через dashboard/testMqtt
+    $mess .= ' <button id="btnTestMqtt" type="button">Тест MQTT</button>';
     $mess .= '<pre id="testResult" style="margin-top:10px;white-space:pre-wrap;"></pre>';
+    $mess .= '<pre id="testMqttResult" style="margin-top:10px;white-space:pre-wrap;"></pre>';
 
     // JSON с тестовыми данными из $this->dataGRZ
     $testPayload = json_encode(array('plate' => $this->dataGRZ));
@@ -135,8 +141,198 @@ public function action_index()
     })();
     </script>';
 
+    // --- Кнопка «Тест MQTT» ---
+    $mess .= '<script>
+    (function () {
+        var url = ' . json_encode(URL::site('dashboard/testMqtt', true)) . ';
+        var btn = document.getElementById("btnTestMqtt");
+        var out = document.getElementById("testMqttResult");
+
+        function yes(flag) {
+            return flag ? "OK" : "нет";
+        }
+
+        btn.addEventListener("click", function () {
+            btn.disabled = true;
+            out.style.color = "";
+            out.textContent = "Проверка MQTT: " + url + " ...";
+
+            fetch(url, { method: "POST" })
+            .then(function (r) {
+                if ( ! r.ok) {
+                    throw new Error("HTTP " + r.status + " " + r.statusText);
+                }
+                return r.json();
+            })
+            .then(function (d) {
+                var text = "";
+                text += "Брокер: " + d.host + ":" + d.port + "\n";
+                text += "TCP-доступность: " + yes(d.probe) + "\n";
+                text += "Подключение CONNECT: " + yes(d.connected) + "\n";
+                text += "Публикация: " + (d.published ? "OK" : (d.enabled ? "нет" : "отключена (enabled = false)")) + "\n";
+                text += "Топик: " + d.topic + "\n";
+
+                if (d.published) {
+                    text += "Сообщение: " + JSON.stringify(d.payload) + "\n";
+                }
+
+                text += "\n" + d.message + "\n";
+                text += "Итог: " + (d.ok ? "тест пройден" : "ОШИБКА") + " (" + d.ms + " мс)";
+
+                out.textContent = text;
+                out.style.color = d.ok ? "#3c763d" : "#a94442";
+                btn.disabled = false;
+            })
+            .catch(function (e) {
+                out.textContent = "Ошибка: " + e;
+                out.style.color = "#a94442";
+                btn.disabled = false;
+            });
+        });
+    })();
+    </script>';
+
     $this->response->body($mess);
 }	
+
+	/**
+	 * Тест настроек MQTT — вызывается кнопкой "Тест MQTT" на панели.
+	 *
+	 * Проверяет TCP-доступность брокера, подключение (CONNECT) и публикует
+	 * пробное сообщение в топик <prefix>/dashboard/test. Результат отдается
+	 * в JSON, чтобы страница показала, на каком этапе проверка не прошла.
+	 *
+	 * URL: dashboard/testMqtt
+	 *
+	 * @return  void
+	 */
+	public function action_testMqtt()
+	{
+		$t1 = microtime(TRUE);
+
+		$result = Mqtt_Publisher::instance()->test();
+
+		$result['ms'] = (int) round((microtime(TRUE) - $t1) * 1000);
+
+		$json = json_encode($result);
+
+		if ($json === FALSE)
+		{
+			// например, в тексте ошибки драйвера/брокера попались не-UTF-8 байты
+			$json = json_encode(array(
+				'ok'      => FALSE,
+				'enabled' => Arr::get($result, 'enabled', FALSE),
+				'host'    => Arr::get($result, 'host', ''),
+				'port'    => Arr::get($result, 'port', 0),
+				'probe'   => Arr::get($result, 'probe', FALSE),
+				'connected' => Arr::get($result, 'connected', FALSE),
+				'published' => FALSE,
+				'topic'   => Arr::get($result, 'topic', ''),
+				'payload' => array(),
+				'ms'      => $result['ms'],
+				'error'   => 'не удалось сериализовать результат теста в JSON',
+				'message' => 'не удалось сериализовать результат теста в JSON',
+			));
+		}
+
+		$this->response
+			->headers('Content-Type', 'application/json')
+			->body($json);
+	}
+
+	/**
+	 * Путь к файлу настроек группы конфигурации Kohana.
+	 *
+	 * Для группы 'config' (как и 'i18n', 'messages') Kohana::find_file()
+	 * всегда возвращает массив найденных файлов - они объединяются при
+	 * загрузке конфигурации. Для вывода берем последний файл: так как пути
+	 * перебираются от system к application, последним оказывается файл
+	 * с наибольшим приоритетом.
+	 *
+	 * @param   string  $group  имя группы ('config', 'mqtt' ...)
+	 * @return  string
+	 */
+	protected function _config_path($group)
+	{
+		$found = Kohana::find_file('config', $group, 'php');
+
+		if (is_array($found))
+		{
+			$found = empty($found) ? FALSE : end($found);
+		}
+
+		return $found ? $found : 'файл настроек не найден';
+	}
+
+	/**
+	 * Строки таблицы "Текущие настройки" с параметрами MQTT.
+	 *
+	 * Значения читаются из modules/ver30/config/mqtt.php через штатный
+	 * механизм конфигурации Kohana (группа 'mqtt') - те же данные, что
+	 * использует Mqtt_Publisher.
+	 *
+	 * @return  string  HTML
+	 */
+	protected function _mqtt_settings()
+	{
+		$config = Kohana::$config->load('mqtt');
+
+		// ключ настройки => описание для таблицы
+		$params = array(
+			'enabled'         => 'true - команды ворот и табло дублируются в MQTT<br>false - публикация в MQTT отключена',
+			'host'            => 'адрес брокера MQTT',
+			'port'            => 'TCP-порт брокера',
+			'username'        => 'логин для подключения к брокеру (— если авторизация не нужна)',
+			'password'        => 'пароль для подключения к брокеру (на странице не выводится)',
+			'client_id'       => 'базовый client id; к нему добавляется случайный суффикс, чтобы брокер закрывал предыдущую сессию',
+			'prefix'          => 'префикс топиков: &lt;prefix&gt;/gate/&lt;id_gate&gt;/controller и &lt;prefix&gt;/gate/&lt;id_gate&gt;/tablo',
+			'qos'             => 'уровень качества обслуживания MQTT (0..2)',
+			'retain'          => 'true - брокер хранит последнее сообщение в топике<br>false - сообщения не сохраняются',
+			'connect_timeout' => 'таймаут предварительной проверки брокера, сек',
+			'down_ttl'        => 'пауза после неудачного подключения к брокеру, сек',
+		);
+
+		$html = '';
+
+		foreach ($params as $key => $note)
+		{
+			$value = $config->get($key);
+
+			if ($key === 'password')
+			{
+				// пароль в открытом виде на странице не показываем
+				$value = ($value === NULL OR $value === '') ? '—' : '******';
+			}
+			else
+			{
+				$value = HTML::chars($this->_config_value($value));
+			}
+
+			$html .= '<tr><td>'.HTML::chars($key).'</td><td>'.$value.'</td><td>'.$note.'</td></tr>';
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Привести значение настройки к строке для вывода в таблице.
+	 *
+	 * @param   mixed   $value
+	 * @return  string
+	 */
+	protected function _config_value($value)
+	{
+		if ($value === NULL OR $value === '')
+			return '—';
+
+		if (is_bool($value))
+			return $value ? 'true' : 'false';
+
+		if (is_array($value))
+			return empty($value) ? '—' : implode(', ', $value);
+
+		return (string) $value;
+	}
 
 	/**
 	 * Блок с параметрами подключения к базе данных:
