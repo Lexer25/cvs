@@ -99,6 +99,9 @@ public function action_index()
     $mess .= '<tr><td>reverseGate</td><td>' . HTML::chars($reverseGateStr) . '</td><td>id ворот, работающих в ревресинов режиме (и на въезд, и на выезд).<br>Если gate находится в этом списке, то щелкнут оба реле</td></tr>';
     $mess .= '</table><br>';
 
+    // --- Блок "Подключение к базе данных" ---
+    $mess .= $this->_db_connection();
+
     // Кнопка «Тест» — отправляет POST с $dataGRZ на dashboard/exec
     $mess .= '<button id="btnTestCvs" type="button">Тест</button>';
     $mess .= '<pre id="testResult" style="margin-top:10px;white-space:pre-wrap;"></pre>';
@@ -135,6 +138,128 @@ public function action_index()
     $this->response->body($mess);
 }	
 
+	/**
+	 * Блок с параметрами подключения к базе данных:
+	 * имя DSN, IP-адрес, путь к базе данных, состояние подключения.
+	 *
+	 * @return  string  HTML
+	 */
+	protected function _db_connection()
+	{
+		$info  = DbInfo::get();
+		$check = DbInfo::check();
+
+		$dsn_name = ($info['dsn_name'] !== '') ? $info['dsn_name'] : '—';
+		$ip       = ($info['ip'] !== '') ? $info['ip'] : '—';
+		$path     = ($info['path'] !== '') ? $info['path'] : '—';
+
+		// описание источника данных
+		$dsn_note = 'имя источника данных ODBC (строка подключения '.HTML::chars($info['dsn']).')';
+
+		if ($info['driver'] !== '')
+		{
+			$dsn_note .= ', драйвер '.HTML::chars(basename($info['driver']));
+		}
+
+		if ($info['error'] !== '')
+		{
+			$dsn_note .= '<br><span style="color:#a94442;">'.HTML::chars($info['error']).'</span>';
+		}
+
+		// состояние подключения
+		if ($check['ok'])
+		{
+			$state = '<span style="color:#3c763d;font-weight:bold;">подключено</span>';
+
+			if ($check['ms'] > 0)
+			{
+				$state .= ' ('.$check['ms'].' мс)';
+			}
+
+			if ($check['warning'] !== '')
+			{
+				$state .= '<br><small>проверочный запрос: '.HTML::chars($this->_short($check['warning'])).'</small>';
+			}
+		}
+		else
+		{
+			$state = '<span style="color:#a94442;font-weight:bold;">нет подключения</span>';
+
+			if ($check['error'] !== '')
+			{
+				$state .= '<br><small style="color:#a94442;">'.HTML::chars($this->_short($check['error'])).'</small>';
+			}
+		}
+
+		// наличие таблицы настроек HL_SETTING
+		$table      = Arr::get($check, 'table', array());
+		$table_name = Arr::get($table, 'name', DbInfo::SETTING_TABLE);
+
+		if (Arr::get($table, 'ok'))
+		{
+			$table_state = '<span style="color:#3c763d;font-weight:bold;">всё ОК</span>';
+			$table_note  = 'таблица '.HTML::chars($table_name).' есть в базе данных';
+		}
+		else
+		{
+			$table_state = '<span style="color:#a94442;font-weight:bold;">не ОК</span>';
+
+			if ($check['ok'])
+			{
+				$table_error = (string) Arr::get($table, 'error');
+
+				// драйвер сообщает об отсутствии таблицы разными словами
+				if (preg_match('/Table unknown|no such table|Base table or view not found/i', $table_error))
+				{
+					$table_note = 'таблица '.HTML::chars($table_name).' не найдена в базе данных';
+				}
+				else
+				{
+					$table_note = 'таблица '.HTML::chars($table_name).' недоступна';
+
+					if ($table_error !== '')
+					{
+						$table_note .= ': '.HTML::chars($this->_short($table_error));
+					}
+				}
+			}
+			else
+			{
+				$table_note = 'проверка не выполнена: нет подключения к базе данных';
+			}
+		}
+
+		$html  = '<b>Подключение к базе данных</b><br>';
+		$html .= '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;margin-bottom:15px;">';
+		$html .= '<tr><th align="left">Параметр</th><th align="left">Значение</th><th align="left">Описание</th></tr>';
+		$html .= '<tr><td>Имя DSN</td><td>'.HTML::chars($dsn_name).'</td><td>'.$dsn_note.'</td></tr>';
+		$html .= '<tr><td>IP-адрес</td><td>'.HTML::chars($ip).'</td><td>адрес сервера базы данных (параметр Server источника данных)</td></tr>';
+		$html .= '<tr><td>Путь к базе данных</td><td>'.HTML::chars($path).'</td><td>файл базы данных на сервере (параметр Database источника данных)</td></tr>';
+		$html .= '<tr><td>Состояние подключения</td><td>'.$state.'</td><td>результат проверки подключения при загрузке страницы</td></tr>';
+		$html .= '<tr><td>Таблица '.HTML::chars($table_name).'</td><td>'.$table_state.'</td><td>'.$table_note.'</td></tr>';
+		$html .= '</table><br>';
+
+		return $html;
+	}
+
+	/**
+	 * Сократить текст (например, длинное сообщение драйвера) до заданной длины.
+	 *
+	 * @param   string   $text
+	 * @param   integer  $length
+	 * @return  string
+	 */
+	protected function _short($text, $length = 400)
+	{
+		$text = trim(preg_replace('/\s+/u', ' ', (string) $text));
+
+		if (function_exists('mb_strlen') AND mb_strlen($text, 'UTF-8') > $length)
+		{
+			$text = mb_substr($text, 0, $length, 'UTF-8').'…';
+		}
+
+		return $text;
+	}
 	
 	public function action_sendMPT()
 	{
