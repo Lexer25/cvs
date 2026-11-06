@@ -11,7 +11,7 @@
  * @package    ver30
  */
 return array(
-	'enabled'         => TRUE,
+	'enabled'         => false,
 	'host'            => '127.0.0.1',   // localhost:1883 (IPv4, чтобы не уйти на ::1)
 	'port'            => 1883,
 	'username'        => NULL,
