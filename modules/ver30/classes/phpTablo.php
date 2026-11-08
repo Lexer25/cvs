@@ -40,9 +40,9 @@ class phpTablo extends phpMPTtcp{
 		$name='tablo_'.$this->address;
 		if(Cache::instance()->delete($name))//удалил старое значение табло
 		{
-			Log::instance()->add(Log::NOTICE, '43-0 cach :name удаден успешно', array('43'=>$name));
+			Log::instance()->add(Log::NOTICE, '43-0 cach :name удален успешно', array('43'=>$name));
 		} else {
-			Log::instance()->add(Log::NOTICE, '43-1 cach :name НЕ удаден', array('43'=>$name));
+			Log::instance()->add(Log::NOTICE, '43-1 cach :name НЕ удален', array('43'=>$name));
 		}
 		Cache::instance()->set($name, Debug::vars($this), 3600);//сохранил новое значение табло
 								

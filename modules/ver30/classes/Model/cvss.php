@@ -135,7 +135,7 @@ class Model_Cvss extends Model {
 		 Log::instance()->add(Log::NOTICE, '729 identifier :data', array(':data'=>Debug::vars($identifier)));
 		// Log::instance()->add(Log::NOTICE, '730 cvs :data', array(':data'=>Debug::vars($cvs)));
 		//формирую информацию о паркинге (нужные режимы его работы
-		//sleep(5); //имитация задержки в период проверки при работе с рабочей базой данных
+		
 		$parking = new Parking($cvs->id_parking);
 		//Log::instance()->add(Log::NOTICE, '924 parking :data', array(':data'=>Debug::vars($parking)));
 		Log::instance()->add(Log::NOTICE, '614 :key Начал работу mainAnalysis для key=:key ворота :id_gate isEnter :isEnter', array(':key'=>$identifier->id, ':id_gate'=>$cvs->id_gate, ':isEnter'=>$cvs->isEnter));
@@ -838,7 +838,6 @@ class Model_Cvss extends Model {
 					case 16:
 					case 17:
 					case 18:
-					case 24:
 					case 24:
 					case 81:
 							//записываю в комментарии к событию список идентификаторов, находящихся в этом гараже на этой парковочной площадке
