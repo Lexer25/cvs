@@ -8,6 +8,28 @@
 В журнал события (и монитор рабочего места охраны) добавлено количество мм на парковке на этой площадке, и количество свободных мест.
 Гараж может иметь машиноместа на разных площадках. Тут будет указано кол-во мест именно на той площадке, куда приехал водитель.
 Добавлено указание способа проверки: по наличию гаража или по категории доступа.
+
+[ОБНОВИТЬ БАЗУ ДАННЫХ]
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 46, 'Въезд запрещен. Неизвестный номер', '{"dx":"0","dy":"8","messColor":"4","messScroll":"1"}', NULL, NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 50, 'Проезд разрешен', '{"dx":"0","dy":"8","messColor":"2","messScroll":"1"}', '2023-04-07 12:31:47', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 65, 'Въезд запрещен. Нет прав.', '{"dx":"0","dy":"8","messColor":"1","messScroll":"1"}', '2023-04-07 12:32:18', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 81, 'Въезд запрещен. Нет мест.', '{"dx":"0","dy":"8","messColor":"6","messScroll":"1"}', '2023-04-07 12:32:46', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, NULL, 'Паркинг', '{"dx":31,"dy":32,"messColor":33,"messScroll":34}', '2023-04-07 12:33:54', 'text1');
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 40, 'Проезд запрещен.Не активен.', '{"dx":"0","dy":"0","messColor":"0","messScroll":"0"}', '2026-11-04 23:49:09', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 41, 'Проезд запрещен.Срок действия истек.', '{"dx":"0","dy":"0","messColor":"0","messScroll":"0"}', '2026-11-04 23:49:32', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 14, 'Выезд без въезда', NULL, '2026-11-08 10:20:53', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 15, 'Въезд разрешен, места есть', NULL, '2026-11-08 10:24:28', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 17, 'Выезд разрешен, находился на парковке', NULL, '2026-11-08 10:27:10', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 18, 'Выезд разрешен, повторный', NULL, '2026-11-08 10:39:52', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 9, 'Проезда нет. Повторный прием номера.', NULL, '2026-11-08 10:51:20', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 8, 'Не обрабатывается. Повторное чтение', NULL, '2026-11-08 12:27:24', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 10, 'Не обрабатывается, чтение вослед', NULL, '2026-11-08 12:27:42', NULL);
+INSERT INTO HL_MESSAGES (ID, EVENTCODE, TEXT, PARAM, "TIMESTAMP", SMALNAME) VALUES (NULL, 11, 'Въезд разрешен, повторно под другим идентификатором', NULL, '2026-11-08 12:28:01', NULL);
+
+COMMIT WORK;
+
+CREATE INDEX IDX_HL_INSIDE_CARD_TIME ON HL_INSIDE (ID_CARD, ENTERTIME);
+
 Вер. 3.4
 [+]
 Вынесены настройки MQTT на основную панель
