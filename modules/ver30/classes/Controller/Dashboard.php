@@ -191,7 +191,8 @@ public function action_index()
         });
     })();
     </script>';
-
+$mess .= '<br>Старт эмулятора: C:\xampp\htdocs\cvs\modules\mptemu\bin\start_mptemu.bat<br>';
+$mess .= 'Старт SSE: http://127.0.0.1:8080/cvs/eventsse';
     $this->response->body($mess);
 }	
 
