@@ -508,6 +508,10 @@ class Model_Cvss extends Model {
 				
 			 break;
 			 case 46 : //неизвестная карта
+			 case 8 : 
+			 case 9 : 
+			 case 10 : 
+			 case 11 : 
 			 case Events::DISABLEDCARD : //карта неактивна код события 40
 			 case Events::CARDEXPIRED : //срок действия карты истек код события 41
 			 
@@ -660,6 +664,63 @@ class Model_Cvss extends Model {
 		$mqtt->tablo($cvs, 'scrolText', "\x08\x00".$page."\x01", $cvs->eventdMess, $data);
 	}
 
+	
+	/** Фильтр от повторного чтения идентификатора
+	@input identifier идентификатор
+	@input delay_cvs время, в течении которого определяется повторное чтение.
+	return true - да, есть повторное чтение
+	return false - нет, повторного чтения нет.
+	
+	*/
+	public function reReadVerification($identifier, $delay_cvs)
+	{
+		 if (Cache::instance()->get('grz_'.$identifier->id))
+			   {
+					// Данные найдены в кеше, не надо обрабатывать ГРЗ.
+					$result=9;
+					Log::instance()->add(Log::NOTICE, '240 Повторный прием идентификатора grz :grz в течении менее чем :delay_cvs. Обработка прекращена с кодом :result', 
+						array(':grz'=>$identifier->id, ':result'=>$result, ':delay_cvs'=>$delay_cvs)); 
+					return true;
+			   } else {
+				   
+				 //  Log::instance()->add(Log::NOTICE, '260 :key Первая отмета. Зафиксирую в мьютексе :name..', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
+					
+				   Cache::instance()->set('grz_'.$identifier->id, array('set_grz'=>1, 'key'=>$identifier->id), $delay_cvs);
+				   Log::instance()->add(Log::NOTICE, '267 :key входной фильтр от повтора номера. нет мьютекс :name. Значит эту отметка не получали давно. Фиксирую в мьютексе и продолжаю обработку.', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
+				return false;
+			   }
+		
+	}
+	
+	/** Фильтр проверка: не находится ли ворота во временной блокировке? Это актуально для реверсивных воротпроверка: не находится ли ворота во временной блокировке? Это актуально для реверсивных ворот
+	@input cvs Информация о воротах
+	
+	return true - да, ворота заблокированыворота не заблокированы.
+	
+	*/
+	public function isGateLockoutActive($cvs, $identifier)
+	{
+		 if (Cache::instance()->get('gateBlock_'.$cvs->id_gate))
+			   {
+					$result=10;
+					// Данные найдены в кеше, не надо обрабатывать ГРЗ.
+					Log::instance()->add(Log::NOTICE, '600 :key найден мьютекс :name. Это значит, что ворота находятся во временной блокировке', array(':key'=>$identifier->id, ':name'=>'gateBlock_'.$cvs->id_gate)); 
+					Log::instance()->add(Log::NOTICE, '601 Прием идентификатора :key от ворот :id_gate в момент встречного движена в реверсивных воротах. Обработка идентификатора прекращена с кодом :result', array(':key'=>$identifier->id, ':id_gate'=>$cvs->id_gate, ':result'=>$result)); 
+					
+					
+				
+					return true;
+				
+			   } else {
+				    Log::instance()->add(Log::NOTICE, '246 :key не найден мьютекс :name. Значит ворота не в режиме блокировки.', array(':key'=>$identifier->id, ':name'=>'gateBlock_'.$cvs->id_gate)); 
+					//проверка: а не идут ли тут друг за другом идентификаторы, которые сразу попали в поле антенны?
+				return false;
+			   }
+		
+	}
+	
+	
+	
 	/**основной блок логики
 		*/
 		
@@ -668,7 +729,7 @@ class Model_Cvss extends Model {
 			$t1=microtime(true);	
 			$cvs=new phpCVS($id_gate);
 			$identifier=new Identifier($identifier);
-			
+			$result = 0;
 			Log::instance()->add(Log::NOTICE, '551-0 :key common identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
 			//Log::instance()->add(Log::NOTICE, '552-1 :key common cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
 				
@@ -683,57 +744,16 @@ class Model_Cvss extends Model {
 			//Log::instance()->add(Log::NOTICE, '777-000 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
 	
 					
-	//Фильтр от повтора
+	//Фильтр от повторного чтения идентификатора в течении времени, указанного в Setting::get('delay_cvs', 120) (или 120 секунд
+			if($this->reReadVerification($identifier, Setting::get('delay_cvs', 120))) $result=9;
 			  
-			   if (Cache::instance()->get('grz_'.$identifier->id))
-			   {
-					// Данные найдены в кеше, не надо обрабатывать ГРЗ.
-					$result=9;
-					Log::instance()->add(Log::NOTICE, '240 Повторный прием идентификатора grz :grz в течении менее чем :delay_cvs. Обработка прекращена с кодом :result', 
-						array(':grz'=>$identifier->id, ':result'=>$result, ':delay_cvs'=>Setting::get('delay_cvs', 120))); 
-					// $events= new Events();
-					 $events->eventCode=$result;
-					// $events->grz=$identifier->id;
-					// $events->id_gate=$cvs->id_gate;
-					// $events->is_enter=$cvs->isEnter;
-					$events->addEventRow();
-					
-					exit;
-				
-			   } else {
-				   
-				 //  Log::instance()->add(Log::NOTICE, '260 :key Первая отмета. Зафиксирую в мьютексе :name..', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
-					
-				   Cache::instance()->set('grz_'.$identifier->id, array('set_grz'=>1, 'key'=>$identifier->id), Setting::get('delay_cvs', 120));
-				   Log::instance()->add(Log::NOTICE, '267 :key входной фильтр от повтора номера. нет мьютекс :name. Значит эту отметка не получали давно. Фиксирую в мьютексе и продолжаю обработку.', array(':key'=>$identifier->id, ':name'=>'grz_'.$identifier->id)); 
-			  
-			   }
-			//Log::instance()->add(Log::NOTICE, '777-001 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025     
-			  
-		//фильтр проверка: не находится ли ворота во временной блокировке? Это актуально для реверсивных ворот
+			 
+	//фильтр проверка: не находится ли ворота во временной блокировке? Это актуально для реверсивных ворот
 			   //в это время любые данные UHF и ГРЗ игнорируются.
-			   if (Cache::instance()->get('gateBlock_'.$cvs->id_gate))
-			   {
-					$result=10;
-					// Данные найдены в кеше, не надо обрабатывать ГРЗ.
-					Log::instance()->add(Log::NOTICE, '600 :key найден мьютекс :name. Это значит, что ворота находятся во временной блокировке', array(':key'=>$identifier->id, ':name'=>'gateBlock_'.$cvs->id_gate)); 
-					Log::instance()->add(Log::NOTICE, '601 Прием идентификатора :key от ворот :id_gate в момент встречного движена в реверсивных воротах. Обработка идентификатора прекращена с кодом :result', array(':key'=>$identifier->id, ':id_gate'=>$cvs->id_gate, ':result'=>$result)); 
-					
-					//$events= new Events();
-					$events->eventCode=$result;
-					//$events->grz=$identifier->id;
-					//$events->id_gate=$cvs->id_gate;
-					$events->addEventRow();
-				
-					exit;
-				
-			   }
-			   //Log::instance()->add(Log::NOTICE, '777-003 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
-			   
-			   Log::instance()->add(Log::NOTICE, '246 :key не найден мьютекс :name. Значит ворота не в режиме блокировки.', array(':key'=>$identifier->id, ':name'=>'gateBlock_'.$cvs->id_gate)); 
-			   //проверка: а не идут ли тут друг за другом идентификаторы, которые сразу попали в поле антенны?
+			if($this->isGateLockoutActive($cvs, $identifier)) $result=10;
 			  
-			  $_data=$this->getMutexIdentifier('gate_'.$cvs->id_gate); //получил номер предыдущего обработанного UHF, на КОТОРЫЙ УЖЕ ИМЕЕТСЯ РАЗРЕШЕНИЕ
+					  
+			  $_data=$this->getMutexIdentifier('gate_'.$cvs->id_gate); //получил номер ПРЕДЫДУЩЕГО обработанного UHF, на КОТОРЫЙ УЖЕ ИМЕЕТСЯ РАЗРЕШЕНИЕ
 			  /* формат мьютекса $_data=array(
 							'key'=>$identifier->id,
 							'id_pep'=>$identifier->id_pep,
@@ -745,7 +765,7 @@ class Model_Cvss extends Model {
 			
 			//Log::instance()->add(Log::NOTICE, '777-004 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
 			
-			if(Arr::get($_data, 'id_gate') == $cvs->id_gate)
+			if(Arr::get($_data, 'id_gate') == $cvs->id_gate)//если проезд через те же ворота...
 			{
 				 
 				//если попали сюда - значит, это "паровозик": попытка проезд в то время, пока ворота открыты от предыдущего проезда.
@@ -761,23 +781,23 @@ class Model_Cvss extends Model {
 				 
 				  //Log::instance()->add(Log::NOTICE, '285 :key найден мьютекс :name :data', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 								
-					if(Arr::get($_data, 'key') == $identifier->id)
+					if(Arr::get($_data, 'key') == $identifier->id)//если номера совпадают...
 					{
 						//получен повторно идентификатор. Этого быть не должно, т.к. повтор фильтруется на входе.
 						
 					}
 					
-					if((Arr::get($_data, 'key') != $identifier->id) and (Arr::get($_data, 'id_pep') == $identifier->id_pep))
+					if((Arr::get($_data, 'key') != $identifier->id) and (Arr::get($_data, 'id_pep') == $identifier->id_pep))// идентификаторы разные, но владелец один и тот же
 					{
 						//номер другой, но владелец тот же самый. вот тут надо прекращать обработку.
 						$result=11;
 					//	$events= new Events();
-						$events->eventCode=$result;
+			//			$events->eventCode=$result;
 					//	$events->grz=$identifier->id;
 					//	$events->id_gate=$cvs->id_gate;
-						$events->addEventRow();
+			//			$events->addEventRow();
 						 Log::instance()->add(Log::NOTICE, '651 :key номер другой, но владелец :id_pep тот же. Завершаю обработку exit;', array(':key'=>$identifier->id, ':id_pep'=>$identifier->id_pep));
-						exit;
+			//			exit;
 					}
 					
 					if((Arr::get($_data, 'id_garage') == $identifier->id_garage))
@@ -786,13 +806,13 @@ class Model_Cvss extends Model {
 						//Едет еще кто-то из того же гаража. Не обрабатывать!!!
 						$result=8;
 				//		$events= new Events();
-						$events->eventCode=$result;
+		//				$events->eventCode=$result;
 				//		$events->grz=$identifier->id;
 				//		$events->id_gate=$cvs->id_gate;
 						$events->addEventRow();
 					 Log::instance()->add(Log::NOTICE, '664 :key номер другой, но гараж :id_garage тот же. Завершаю обработку exit;', array(':key'=>$identifier->id,':id_garage'=>$identifier->id_garage));
 
-						exit;
+			//			exit;
 					}
 					
 					
@@ -803,8 +823,9 @@ class Model_Cvss extends Model {
 				//Log::instance()->add(Log::NOTICE, '297 :key НЕ найден мьютекс :name. Значит на этих воротах идентификатор не обрабатывается в параллельном потоке.', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 				
 					Log::instance()->add(Log::NOTICE, '274 :key start mainAnalysis.', array(':key'=>$identifier->id));
-					//============== Главное! анализ!!! ==============================		
-						$result=Model::factory('cvss')->mainAnalysis($identifier,  $cvs);
+					//============== Главное! анализ!!! ==============================	
+//если не сработали фильтры, то начинаю анализ разрешений					
+			if($result == 0)	$result=Model::factory('cvss')->mainAnalysis($identifier,  $cvs);
 					//===================================================================
 						Log::instance()->add(Log::NOTICE, '292 :key gate :gate garage :garage stop mainAnalysis с результатом :result.', array(':key'=>$identifier->id, ':result'=> $result, ':gate'=>$cvs->id_gate, ':garage'=>$identifier->id_garage));
 				   
