@@ -50,7 +50,6 @@ class Model_Cvss extends Model {
 	$sql='select hlp.id from hl_param hlp
 	where hlp.box_ip=\''.$ip.'\'
 	and hlp.channel='.$port;
-	//Log::instance()->add(Log::DEBUG, '54 '.$sql);
 	return( DB::query(Database::SELECT, $sql)
 			->execute(Database::instance('fb'))
 			->get('ID'));
@@ -137,12 +136,10 @@ class Model_Cvss extends Model {
 		//формирую информацию о паркинге (нужные режимы его работы
 		
 		$parking = new Parking($cvs->id_parking);
-		//Log::instance()->add(Log::NOTICE, '924 parking :data', array(':data'=>Debug::vars($parking)));
 		Log::instance()->add(Log::NOTICE, '614 :key Начал работу mainAnalysis для key=:key ворота :id_gate isEnter :isEnter', array(':key'=>$identifier->id, ':id_gate'=>$cvs->id_gate, ':isEnter'=>$cvs->isEnter));
 		//начинаю анализ
 		//начинаю проверку полученного идентификатора. grz
 		//$identifier=new Identifier($grz);
-		//Log::instance()->add(Log::NOTICE, '776 Identifier'. Debug::vars($identifier));
 		if(!$identifier->status==Identifier::VALID){
 			//зафиксировать в журнале отказ от дальнейшей обработки
 			Log::instance()->add(Log::NOTICE, '675 :key identifier :key не валидна status=:status. Завершаю обработку.',
@@ -205,7 +202,6 @@ class Model_Cvss extends Model {
 //ГАРАЖА НЕТ!!!			
 			if($cvs->isEnter) {//если въезд 
 			//checkInPlace - проверка нахождения на территории
-			//Log::instance()->add(Log::NOTICE, '781 identifier :key ', array(':key'=>Debug::vars($identifier)));
 			
 				if ($cvs->checkAccessForNonGarage($identifier->id_pep))//есть ли разрешение по категориям доступа?
 				{
@@ -234,7 +230,6 @@ class Model_Cvss extends Model {
 			//результат анализа:
 			//-въезд разрешен (т.е. места есть).
 			//въезд запрещен (т.е. мест нет)
-			//Log::instance()->add(Log::NOTICE, '727 garage'. Debug::vars($garage));
 			if(!$cvs->checkAccess($garage->id_parking)){ //тут $garage->id_parking - список парковок, на которых расположены машиноместа гаража
 				//ворота, куда подъехал автомобиль, не содержит парковочных мест гаража, разрешенных этому ГРЗ.
 				//въезд запрещен
@@ -372,7 +367,6 @@ class Model_Cvss extends Model {
 			foreach($reverseList as $key=>$value)
 			{
 				
-				//Log::instance()->add(Log::DEBUG, 'Line 335 блокировка ворот отладка :_dd. ', array(':_dd'=>Debug::vars($reverseList, $key, $value, $cvs->id_gate, ($cvs->id_gate != $value))));
 				if ($cvs->id_gate != $value) 
 				{
 					$delayReversRepeat=Setting::get('delayReversRepeat', 120);//время блокировки смежный ворот при выезде
@@ -420,7 +414,6 @@ class Model_Cvss extends Model {
 			case events::G_OK_2 : //14 выезд разрешен без въезда, имеется гараж, на парковке не находится
 			
 			$mpt=new phpMPTtcp($cvs->box_ip, $cvs->box_port);//создаю экземпляр контроллера МПТ
-				//Log::instance()->add(Log::NOTICE, '307-307  '.Debug::vars($mpt));
 				if(!Arr::get($config, 'debug')) {
 						$mpt->openGate($cvs->mode);// если режим отладки НЕ включен, то даю команду открыть ворота
 				} else {
@@ -436,7 +429,6 @@ class Model_Cvss extends Model {
 						if(!Arr::get($config, 'debug')) $mpt->openGate($cvs->mode);// открыть ворота
 						$i++;
 					}
-					//Log::instance()->add(Log::NOTICE, '004_150 Событие 50. Результат выполнения команды openGate '.$cvs->box_ip.':'.$cvs->box_port.' result='.$mpt->result.', desc='.$mpt->edesc.'  после '. $i .' попыток time_from_start='.number_format((microtime(1) - $t1), 3));		
 				if($mpt->result == 'err')//регистр важен:  phpMPTtcp выставляет именно 'err'
 				{
 					Log::instance()->add(Log::NOTICE, '138 Событие 50. Не смог открыть ворота в течении 10 попыток. Видеокамера '.$cvs->cam.' ('.$direct.') ГРЗ '.$identifier->id.' контролер IP='.$cvs->box_ip.':'.$cvs->box_port.' Режим шлюза '.$cvs->mode.' Ответ '.$mpt->result.' edesc '.$mpt->edesc);		
@@ -491,20 +483,17 @@ class Model_Cvss extends Model {
 				
 				$tablo->command='clearTablo';
 				if(!Arr::get($config, 'debug')) $tablo->execute(); 		
-				//Log::instance()->add(Log::NOTICE, '152 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
 					
 				$tablo->command='text';// вывод ГРЗ на табло
 				$tablo->commandParam=$identifier->id;
 				$tablo->coordinate="\x00\x00\x02";
 				if(!Arr::get($config, 'debug')) $tablo->execute();
-				//Log::instance()->add(Log::NOTICE, '158 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
 				
 				$tablo->command='scrolText';// вывод сообщений на табло
 				$tablo->commandParam=$cvs->eventdMess;
 				$tablo->coordinate="\x08\x00\x02\x01";
 				$this->mqttTablo($cvs, $identifier, $tablo, 2);
 				if(!Arr::get($config, 'debug')) $tablo->execute();
-				//Log::instance()->add(Log::NOTICE, '164 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));
 				
 				
 			 break;
@@ -729,7 +718,6 @@ class Model_Cvss extends Model {
 			$identifier=new Identifier($identifier);
 			$result = 0;
 			Log::instance()->add(Log::NOTICE, '551-0 :key common identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
-			//Log::instance()->add(Log::NOTICE, '552-1 :key common cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
 				
 			//готовлю класс для записи события.
 			//единые для всех событий данные заполняю заранее.
@@ -739,7 +727,6 @@ class Model_Cvss extends Model {
 			$events->is_enter=$cvs->isEnter;
 			if(!is_null($identifier->id_garage)) $events->id_garage=$identifier->id_garage;//номер гаража
 			
-			//Log::instance()->add(Log::NOTICE, '777-000 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
 	
 					
 	//Фильтр от повторного чтения идентификатора в течении времени, указанного в Setting::get('delay_cvs', 120) (или 120 секунд
@@ -761,7 +748,6 @@ class Model_Cvss extends Model {
 							'isEnter'=>$cvs->isEnter,
 							); */
 			
-			//Log::instance()->add(Log::NOTICE, '777-004 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
 			
 			if(Arr::get($_data, 'id_gate') == $cvs->id_gate)//если проезд через те же ворота...
 			{
@@ -772,12 +758,9 @@ class Model_Cvss extends Model {
 				// - если гараж принадлежит ранее проехавшему автомобилю
 				// - если номер не валиден либо не имеет право на проезд 12.08.2025 г.
 				
-				 //Log::instance()->add(Log::NOTICE, '634-0 :key паровозик identifier :data', array(':key'=>$identifier->id,':data'=>Debug::vars($identifier)));
-				 //Log::instance()->add(Log::NOTICE, '634-1 :key паровозик cvs :data', array(':key'=>$identifier->id,':data'=>Debug::vars($cvs)));
 		
 				 $result=Events::ANALYSERBUSY;//код 7 - процесс занят
 				 
-				  //Log::instance()->add(Log::NOTICE, '285 :key найден мьютекс :name :data', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 								
 					if(Arr::get($_data, 'key') == $identifier->id)//если номера совпадают...
 					{
@@ -816,9 +799,7 @@ class Model_Cvss extends Model {
 					
 			}		
 			
-			//Log::instance()->add(Log::NOTICE, '777-005 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 
 			//} else {
-				//Log::instance()->add(Log::NOTICE, '297 :key НЕ найден мьютекс :name. Значит на этих воротах идентификатор не обрабатывается в параллельном потоке.', array(':key'=>$identifier->id, ':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 				
 					Log::instance()->add(Log::NOTICE, '274 :key start mainAnalysis.', array(':key'=>$identifier->id));
 					//============== Главное! анализ!!! ==============================	
@@ -850,7 +831,6 @@ class Model_Cvss extends Model {
 							'id_garage'=>$identifier->id_garage,
 							);
 						$this->setMutexIdentifier('gate_'.$cvs->id_gate, $_data ); //если проезд разрешен, то фиксирую этот ГРЗ в мьютексе.
-						//Log::instance()->add(Log::NOTICE, '206 :key валидация прошла успешно, записал в mutex :name значение :data', array(':key'=>$identifier->id,':name'=>'gate_'.$cvs->id_gate, ':data'=>Debug::vars($_data)));
 													
 					break;
 					case 15://проезд запрещен...
@@ -883,7 +863,6 @@ class Model_Cvss extends Model {
 		
 //============== управление воротами ========================================			
 			//перехожу к управлению воротами
-	//Log::instance()->add(Log::NOTICE, '777-008 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 	
 	
 	Model::factory('cvss')->gateControl($identifier, $cvs);
 		Log::instance()->add(Log::NOTICE, "335 :key Stop gate=:gate, code_validation=:code, total_time=:tt", array(
@@ -894,7 +873,6 @@ class Model_Cvss extends Model {
 			));	
 		//echo Debug::vars('419 обработку ГРЗ завершил.');exit;
 		Log::instance()->add(Log::NOTICE, '337 end debug :id :data', array(':data'=>number_format((microtime(1) - $t1), 3), ':id'=>$identifier->id));
-	//Log::instance()->add(Log::NOTICE, '777-009 check_time :check_time ', array(':check_time'=>microtime(true)-$t1));//23.10.2025 	
 		return;
 			
 		}
@@ -934,7 +912,6 @@ class Model_Cvss extends Model {
 		//public function setMutexIdentifier($id_gate, $identifier)
 		public function setMutexIdentifier($name, $data)
 		{
-			//Log::instance()->add(Log::NOTICE, '389 записал в mutex :name значения :data', array(':mame'=>$name, ':data'=>Debug::vars($data)));
 			if (Cache::instance()->get($name))//если true, значит он уже обрабатывается. Обработка полученного идентификатора надо прекращать.
 			{
 				return true;
@@ -973,7 +950,6 @@ class Model_Cvss extends Model {
 		
 		public function loophandler($id_gate)
 		{
-			//Log::instance()->add(Log::DEBUG, 'Line 833 loophandler :data. ', array(':data'=>$id_gate));
 			/* $events= new Events();
 			$events->grz=null;
 			$events->id_gate=$id_gate;
@@ -998,7 +974,6 @@ class Model_Cvss extends Model {
 				$query = DB::query(Database::SELECT, $sql)
 				->execute(Database::instance('fb'))
 				->as_array();
-				//Log::instance()->add(Log::DEBUG, 'Line 855 :debug ', array(':debug'=>Debug::vars($query)));
 				
 				foreach($query as $key=>$value){
 					$result[$key]['name']= iconv('cp1251','UTF-8',$value['NAME']);
