@@ -432,7 +432,7 @@ class Model_Cvss extends Model {
 					$i=0;
 					while($mpt->result !='OK' AND $i<2)// делать до 2 попыток
 					{
-						Log::instance()->add(Log::DEBUG, '155 Команда открыть ворота '.$cvs->box_ip.':'.$cvs->box_port.' выполнена неудачно: '.$mpt->result.' desc '.$mpt->edesc.'. timestamp '.microtime(true).'. Команда Открыть ворота повторяется еще раз, попытка '.$i.' time_from_start='.number_format((microtime(1) - $t1), 3));
+						Log::instance()->add(Log::DEBUG, '155-0 Команда открыть ворота '.$cvs->box_ip.':'.$cvs->box_port.' выполнена неудачно: '.$mpt->result.' desc '.$mpt->edesc.'. timestamp '.microtime(true).'. Команда Открыть ворота повторяется еще раз, попытка '.$i.' time_from_start='.number_format((microtime(1) - $t1), 3));
 						if(!Arr::get($config, 'debug')) $mpt->openGate($cvs->mode);// открыть ворота
 						$i++;
 					}
@@ -442,8 +442,9 @@ class Model_Cvss extends Model {
 					Log::instance()->add(Log::NOTICE, '138 Событие 50. Не смог открыть ворота в течении 10 попыток. Видеокамера '.$cvs->cam.' ('.$direct.') ГРЗ '.$identifier->id.' контролер IP='.$cvs->box_ip.':'.$cvs->box_port.' Режим шлюза '.$cvs->mode.' Ответ '.$mpt->result.' edesc '.$mpt->edesc);		
 				} else 
 				{
-					//Log::instance()->add(Log::NOTICE, '004_64 Событие 50. Ответ контроллера после повторной команды '.$mpt->result.' edesc '.$mpt->edesc.'  после '. $i .' попыток.');	
 					
+					Log::instance()->add(Log::DEBUG, '155-1 Команда открыть ворота gate :gate '.$cvs->id_gate.' '.$cvs->box_ip.':'.$cvs->box_port.' выполнена успешно');
+						
 						//Ворота открылись успешно, надо добавлять ГРЗ в таблицу inside в зависиммочти от направления движения
 						
 						$inside= new insideList;
@@ -521,14 +522,13 @@ class Model_Cvss extends Model {
 				if(!Arr::get($config, 'debug')) $tablo->execute(); 	
 				
 				
-				//Log::instance()->add(Log::NOTICE, '173 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
-							
+				
 				
 				$tablo->command='text';// вывод ГРЗ на табло
 				$tablo->commandParam=$identifier->id;
 				$tablo->coordinate="\x00\x00\x03";
 				if(!Arr::get($config, 'debug')) $tablo->execute();
-				//Log::instance()->add(Log::NOTICE, '180 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+				
 
 				
 				$tablo->command='scrolText';// вывод сообщений на табло
@@ -536,7 +536,7 @@ class Model_Cvss extends Model {
 				$tablo->coordinate="\x08\x00\x03\x01";
 				$this->mqttTablo($cvs, $identifier, $tablo, 3);
 				if(!Arr::get($config, 'debug')) $tablo->execute();
-				//Log::instance()->add(Log::NOTICE, '187 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+				
 
 				
 				
@@ -547,13 +547,13 @@ class Model_Cvss extends Model {
 					
 				$tablo->command='clearTablo';
 				if(!Arr::get($config, 'debug')) $tablo->execute(); 		
-				//Log::instance()->add(Log::NOTICE, '203 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+				
 				
 				$tablo->command='text';// вывод ГРЗ на табло
 				$tablo->commandParam=$identifier->id;
 				$tablo->coordinate="\x00\x00\x04";
 				if(!Arr::get($config, 'debug')) $tablo->execute();
-				//Log::instance()->add(Log::NOTICE, '203 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+						
 
 				
 				$tablo->command='scrolText';// вывод сообщений на табло
@@ -561,9 +561,7 @@ class Model_Cvss extends Model {
 				$tablo->coordinate="\x08\x00\x04\x01";
 				$this->mqttTablo($cvs, $identifier, $tablo, 4);
 				if(!Arr::get($config, 'debug')) $tablo->execute();
-				//Log::instance()->add(Log::NOTICE, '216 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
-
-				
+								
 			
 			
 				
@@ -574,14 +572,14 @@ class Model_Cvss extends Model {
 					
 				$tablo->command='clearTablo';
 				if(!Arr::get($config, 'debug')) $tablo->execute(); 	
-				//Log::instance()->add(Log::NOTICE, '232 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+					
 					
 				
 				$tablo->command='text';// вывод ГРЗ на табло
 				$tablo->commandParam=$identifier->id;
 				$tablo->coordinate="\x00\x00\x06";
 				if(!Arr::get($config, 'debug')) $tablo->execute();
-				//Log::instance()->add(Log::NOTICE, '239 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+				
 
 				
 				$tablo->command='scrolText';// вывод сообщений на табло
@@ -589,7 +587,7 @@ class Model_Cvss extends Model {
 				$tablo->coordinate="\x08\x00\x06\x01";
 				$this->mqttTablo($cvs, $identifier, $tablo, 6);
 				if(!Arr::get($config, 'debug')) $tablo->execute();
-				//Log::instance()->add(Log::NOTICE, '246 Ответ от табло '.$cvs->tablo_ip.':'.$cvs->tablo_port.' result: '.$tablo->result.' desc '.$tablo->edesc.' time_from_start='.number_format((microtime(1) - $t1), 3));		
+					
 
 			 break;
 			 
