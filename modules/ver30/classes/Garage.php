@@ -92,6 +92,32 @@ class Garage
 		return $query;
     }
 	
+	
+		/**количество машиномест гаража на указанной площадке.
+		гараж может иметь машиноместа на разных площадках, а посдчет необходимо вести на той площадке, куда он пытается заехать
+		
+		*/
+		
+		//30.04.2026 получить список ГРЗ и UHF, находящихся в этом гараже
+		public static function getListMMOnPlace($gate, $garage)
+		//public function getListIdentifierOnGarage()
+		{
+			$sql_details='select hlg.id_place from  hl_garage hlg
+					join hl_place hlp on hlg.id_place=hlp.id
+					join hl_parking hlp2 on hlp.id_parking=hlp2.id
+					join hl_param hlp3 on hlp3.id_parking= hlp2.id
+					where hlg.id_garagename='.$garage.'
+					and hlp3.id='.$gate;
+							
+		    Log::instance()->add(Log::NOTICE, "112 ". $sql_details);
+					$query = DB::query(Database::SELECT, $sql_details)
+						->execute(Database::instance('fb'))
+						->as_array(); 
+			
+			return $query;
+			
+		}
+		
 		
 		//30.04.2026 получить список ГРЗ и UHF, находящихся в этом гараже
 		public static function getListIdentifierOnGarage($gate, $garage)
@@ -103,21 +129,21 @@ class Garage
                     join hl_param hlp on hli.counterid=hlp.id_parking
                     where hlp.id='.$gate.'
                     and hlo.id_garage='.$garage;
-					
-   // Log::instance()->add(Log::NOTICE, "105 ". $sql_details);
-			$query = DB::query(Database::SELECT, $sql_details)
-				->execute(Database::instance('fb'))
-				->as_array(); 
-	
-	 if (empty($query)) {
-        return ''; // Или вернуть пустую строку
-    }
-    
-    // Формируем строку с перечнем ID_CARD в кавычках
-    $ids = array_column($query, 'ID_CARD');
-    $result = '"' . implode('", "', $ids) . '"';
-    
-    return $result;
+							
+		    Log::instance()->add(Log::NOTICE, "105 ". $sql_details);
+					$query = DB::query(Database::SELECT, $sql_details)
+						->execute(Database::instance('fb'))
+						->as_array(); 
+			
+			 // if (empty($query)) {
+				// return ''; // Или вернуть пустую строку
+			// }
+			
+			// Формируем строку с перечнем ID_CARD в кавычках
+			$ids = array_column($query, 'ID_CARD');
+			$result = '"' . implode('", "', $ids) . '"';
+			
+			return $ids;
 			
 		}
 		public function getPlaceCountUccuped($id_place)//подсчет количества занятых мест на указанной площадке для текущего гаража

@@ -821,8 +821,8 @@ class Model_Cvss extends Model {
 			//делаю набор условий для последующей обработки. Если результат 50 (можно проезжать), то жду 30 секунд.
 	
 				switch($result){
-					case 81://проезд разрешен
-					case 50://проезд разрешен
+					case 15://проезд разрешен
+					case 50://проезд разрешен. Сохраняю данные в мьютексе
 						$_data=array(
 							'key'=>$identifier->id,
 							'id_pep'=>$identifier->id_pep,
@@ -839,10 +839,15 @@ class Model_Cvss extends Model {
 					case 18:
 					case 24:
 					case 81:
-							//записываю в комментарии к событию список идентификаторов, находящихся в этом гараже на этой парковочной площадке
+							/* //записываю в комментарии к событию список идентификаторов, находящихся в этом гараже на этой парковочной площадке
 							$_keyList=Garage::getListIdentifierOnGarage($cvs->id_gate, $identifier->id_garage);
 							Log::instance()->add(Log::DEBUG, '712-0 '.Debug::vars($_keyList));
-							$events->comment='Внутри '.$_keyList;
+							//$events->comment='Внутри '.$_keyList;
+							if (empty($_keyList)) {
+								$events->comment = 'Гараж свободен';
+							} else {
+								$events->comment = 'Внутри ' . $_keyList;
+							} */
 					break;
 					default:
 								
@@ -850,6 +855,67 @@ class Model_Cvss extends Model {
 					break;
 				}
 				
+				if($identifier->id_garage){
+					//есть гараж
+					
+					Log::instance()->add(Log::DEBUG, '860-0 Есть гараж!');
+					switch($result){
+						
+						case 9:
+							$events->comment = 'Повторное чтение идентификатора';
+						break;
+						case 65:
+						
+							$events->comment = 'Чужие ворота.';
+						break;
+						default:
+												//вывод пояснений
+							Log::instance()->add(Log::DEBUG, '858-0 '.Debug::vars($cvs));			
+							Log::instance()->add(Log::DEBUG, '858-1 '.Debug::vars($identifier));			
+					
+							$_mmList=Garage::getListMMOnPlace($cvs->id_gate, $identifier->id_garage);
+							$_keyList=Garage::getListIdentifierOnGarage($cvs->id_gate, $identifier->id_garage);
+							
+							Log::instance()->add(Log::NOTICE, '860-0 '.Debug::vars($_mmList));
+							Log::instance()->add(Log::NOTICE, '860-1 '.Debug::vars($_keyList));
+							Log::instance()->add(Log::NOTICE, '860-2 '.implode(",", $_keyList));
+							
+							$vacant=count($_mmList) - count($_keyList);
+							$mess=__('Мест :count, свободно :vacant', array(':count'=>count($_mmList), ':vacant'=>$vacant));
+										Log::instance()->add(Log::DEBUG, '712-0 '.Debug::vars($_keyList));
+										//$events->comment='Внутри '.$_keyList;
+										if (empty($_keyList)) {
+											$events->comment = 'Гараж свободен<br>'.$mess;
+										} else {
+											$events->comment = 'Внутри ' . implode(",", $_keyList).'<br>'.$mess;
+										}
+		
+						break;
+					}
+					
+
+							
+				} else {
+					//нет гаража
+					Log::instance()->add(Log::DEBUG, '860-0 Нет гаража!');
+					switch($result){
+						case 9:
+							$events->comment = 'Повторное чтение идентификатора';
+						break;
+						case 6:
+						case 50:
+							$events->comment = 'Гаража нет, проезд по категории доступа.';
+						break;
+						case 65:
+						
+							$events->comment = 'Гаража нет, разрешения нет.';
+						break;
+						default:
+							$events->comment = 'Mess 890';	
+		
+						break;
+					}
+				}
 
 //=========== запись события в журнал
 
